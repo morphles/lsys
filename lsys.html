@@ -1,0 +1,272 @@
+<html>
+<head>
+	<title>L-Systems</title>
+	<script type="text/javascript">
+		var s;
+		var stack = [];
+		function e(id) {
+			return document.getElementById(id);
+		}
+
+		var funcs = {
+			fwd:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.fwd;
+				var nx = x + Math.cos(a) * l;
+				var ny = y + Math.sin(a) * l;
+				ctx.moveTo(x, y);
+				ctx.lineTo(nx, ny);
+				return [nx, ny, a, l];
+			},
+
+			tl:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.tl;
+				return [x, y, a - da, l];
+			},
+
+			tr:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.tr;
+				return [x, y, a + da, l];
+			},
+
+			push:function (x, y, a, l, ctx, da, dl) {//XXX push/pop rep!
+				//funcs.rep = funcs.push;
+				stack.push([x, y, ca, l]);
+				return [x, y, a, l];
+			},
+
+			pop:function (x, y, a, l, ctx, da, dl) {
+				//funcs.rep = funcs.pop;
+				item = stack.pop();
+				return (typeof item != undefined) > 0 ? item : [x, y, a, l];
+			},
+
+			point:function (x, y, a, l, ctx, da, dl) {
+				//funcs.rep = funcs.rect;
+				ctx.fillRect(x, y, 1, 1);
+				return [x, y, a, l];
+			},
+
+			rect:function (x, y, a, l, ctx, da, dl) {
+				//funcs.rep = funcs.rect;
+				d = l / 2;
+				ctx.fillRect(x - d, y - d, l, l);
+				return [x, y, a, l];
+			},
+
+			mu:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.mu;
+				return [x, y - (+l), a, l];
+			},
+
+			md:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.md;
+				return [x, y + (+l), a, l];
+			},
+
+			mr:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.mr;
+				return [x + (+l), y, a, l];
+			},
+
+			ml:function (x, y, a, l, ctx, da, dl) {
+				funcs.rep = funcs.ml;
+				return [x - (+l), y, a, l];
+			},
+			rep:function (x, y, a, l, ctx, da, dl) {
+				return [x, y, a, l];//dummy declared to appear in help
+			},
+		};
+
+		function draw(s, assocc) {
+			var w = e('cv').width;
+			var h = e('cv').height;
+			var ctx = e('cv').getContext('2d');
+			ctx.fillStyle = "rgba(0,0,0,1)";
+			ctx.fillRect( 0 , 0 , w , h );
+			ctx.rect( 0 , 0 , w , h );
+			ctx.clip();
+			ctx.fillStyle = "rgba(100,200,100,0.1)";
+			ctx.strokeStyle = "rgba(100,200,100,1)";
+
+			dl = 1;
+			da = Math.PI / 180 * e('deg').value;
+			ia = -Math.PI / 2;
+
+			ca = ia; x = w / 2; y = h / 2; l = e('len').value;
+			for (i = 0; i < s.length; i++) {
+				ctx.beginPath();
+				[x, y, ca, l] = typeof funcs[assocc[s[i]]] === 'function' ? funcs[assocc[s[i]]](x, y, ca, l, ctx, da, dl) : [x, y, ca, l];
+				ctx.stroke();
+			}
+		}
+
+		function ran(a) {//maybe can be simplified; maybe using non cumulative probabilitis; though probably simpler with cumulative
+			var i, j;
+			var r = Math.random();
+			for (i = 0, j = 0; (r > j) && (i < a.length); j = a[i], i++);
+			return Math.max(i - 1, 0);
+		}
+
+		function calc() {
+			e('result').innerHTML = '';
+			s = e('seed').value;
+			var n = e('iter').value;
+			//sessionStorage.setItem("seed", s);
+			//sessionStorage.setItem("rules", e('rules').value);
+			var rs = {};
+			var assocc = {};
+			var ns = '';
+
+			e('rules').value.split("\n").forEach(function (e) {
+				[lhs, rhs] = e.split("=");
+				[chr, prob] = lhs.split(".");
+				if (typeof rs[chr] == 'undefined') {
+					rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
+				}
+				rs[chr]['ps'].push(prob ? +("0." + prob) : 0);
+				rs[chr]['rs'].push(rhs);
+			});
+
+			for (chr in rs) {
+				arr = rs[chr]['ps'].slice(0);
+				rs[chr]['ps'] = arr.reduce(function (p, c, i) { p.push((i ? p[i - 1] : 0) + c); return p;}, []);
+			}
+
+			for (i = 0; i < n; i++) {
+				ns = '';
+				for (j = 0; j < s.length; j++) {
+					p = rs[s[j]];
+					idx = p ? ran(p['ps']) : 0;
+					ns = ns + (p ? p['rs'][idx] : s[j]);
+				}
+				s = ns;
+			}
+
+			e('func').value.split("\n").forEach(function (e) {
+				var parts = e.split("=");
+				assocc[parts[0]] = parts[1];
+			});
+
+			draw(s, assocc);
+
+			e('dl_container').innerHTML = '<a href="' + e('cv').toDataURL("image/png") + '">Download</a>';
+		}
+
+		function get_json() {
+			alert(JSON.stringify({
+				'seed':e('seed').value,
+				'rules':e('rules').value,
+				'func':e('func').value,
+				'iter':e('iter').value,
+				'len':e('len').value,
+				'deg':e('deg').value,
+			}));
+		}
+
+		function set_json(d) {
+			if (!d) {
+				return;
+			}
+			d = JSON.parse(d);
+			e('seed').value = d['seed'];
+			e('rules').value = d['rules'];
+			e('func').value = d['func'];
+			e('iter').value = d['iter'];
+			e('len').value = d['len'];
+			e('deg').value = d['deg'];
+		}
+
+		function spinner (ev) { ev.target.value = (+ev.target.value) + (ev.deltaY > 0 ? -1 : 1); ev.preventDefault(); }
+
+		document.addEventListener('DOMContentLoaded', function () {
+			e('calc').onclick = calc;
+			//e('seed').value = sessionStorage.getItem("seed");
+			//e('rules').value = sessionStorage.getItem("rules");
+			e('show').onclick = function() { e('result').innerHTML = s; };
+			//e('next').onclick = function () { e('iter').value = (+e('iter').value) + 1; calc(); };
+			//e('prev').onclick = function () { e('iter').value = (+e('iter').value) - 1; calc(); };
+			for (prop in funcs) {
+				e('func_help').innerHTML = e('func_help').innerHTML + prop + ", ";
+			}
+			e('get_json').onclick = get_json;
+			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
+			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = spinner;
+		}, false);
+	</script>
+	<style type="text/css">
+		body {color:lightgray;background-color:black;}
+		canvas {border:1px solid cyan; margin-top:3px;}
+		.spinner { width:3em; }
+	</style>
+</head>
+
+<body>
+	<label>Seed: <input type="text" id="seed" value="[x][z][c]e"/></label> <input type="button" id="get_json" value="Get JSON" /> <input type="button" id="set_json" value="Set JSON" /><br /><br />
+	<table>
+		<tr>
+			<td>
+				<label>
+					Rules (one per line):<br />
+<textarea id="rules" rows="10" cols="30">x=xw[D][A]zDc
+z=zs[D][A]eAx
+c=cd[W][S]eWz
+e=ea[W]S[S]xc
+D=Ddr
+A=Aar
+W=Wwr
+S=Ssr</textarea>
+				</label>
+			</td>
+			<td>
+				<label>
+					Associated functions:<br />
+<textarea id="func" rows="10" cols="30">r=rect
+w=mu
+a=ml
+s=md
+d=mr
+[=push
+]=pop
+@=rep</textarea>
+				</label>
+			</td>
+			<td>
+				<label>
+					Available functions:<br />
+					<div id="func_help">
+					</div>
+				</label>
+			</td>
+		</tr>
+	</table>
+	<br /><br />
+	<label>Iterations: <input type="text" class="spinner" id="iter" value="5"/></label><br /><br />
+	<label>Length: <input type="text" class="spinner" id="len" value="5"/></label><br /><br />
+	<label>Angle: <input type="text" class="spinner" id="deg" value="90"/></label><br /><br />
+	<!-- <input type="button" value="Calculate Previous" id="prev" /> -->
+	<input type="button" value="Calculate" id="calc" />
+	<!-- <input type="button" value="Calculate Next" id="next" /> -->
+	<br />Result image: <span id="dl_container"></span><br />
+	<canvas id="cv" width="1024" height="768"></canvas>
+	<br /><br />
+	<div>
+		<span id="show" style="text-decoration:underline;">Show result string</span>:<br />
+		<div id="result" style="word-wrap:break-word;width:120em;font-family:monospace;">
+		</div>
+	</div> 
+	<br /><br />
+	<br /><br />
+	<!--
+samples
+====================
+"city"
+{"seed":"[x][z]v","rules":"x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop","iter":"15","len":"2","deg":"90"}
+"island-ish/blob thing"
+{"seed":"[x][z][c]e","rules":"x.6=xw[D][A]zDc\nx.4=x\nz.6=zs[D][A]eAx\nz.4=z\nc.6=cd[W][S]eWz\nc.4=c\ne.6=ea[W]S[S]xc\ne.4=e\nD=Ddr\nA=Aar\nW=Wwr\nS=Ssr","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"12","len":"2","deg":"90"}
+"blobs with randomness!!!!; not liny"
+{"seed":"[x][z][c]e","rules":"x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"12","len":"2","deg":"90"}
+"above ?skewed? in some way maybe, not bad ether"
+{"seed":"[x][z][c]e","rules":"x.5=xrazDc\nx.5=x\nz.5=zrweAx\nz.5=z\nc.5=crseWz\nc.5=c\ne.5=erdSxc\ne.5=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"15","len":"2","deg":"90"}
+	-->
+</body>
+</html>
