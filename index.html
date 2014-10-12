@@ -48,8 +48,7 @@
 
 			rect:function (x, y, a, l, ctx, da, dl) {
 				//funcs.rep = funcs.rect;
-				d = l / 2;
-				ctx.fillRect(x - d, y - d, l, l);
+				ctx.fillRect(x, y, l, l);
 				return [x, y, a, l];
 			},
 
@@ -81,11 +80,12 @@
 			var w = e('cv').width;
 			var h = e('cv').height;
 			var ctx = e('cv').getContext('2d');
+			var alpha = e('alpha').value;
 			ctx.fillStyle = "rgba(0,0,0,1)";
 			ctx.fillRect( 0 , 0 , w , h );
 			ctx.rect( 0 , 0 , w , h );
 			ctx.clip();
-			ctx.fillStyle = "rgba(100,200,100,0.1)";
+			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
 			ctx.strokeStyle = "rgba(100,200,100,1)";
 
 			dl = 1;
@@ -191,22 +191,34 @@
 			e('get_json').onclick = get_json;
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
 			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = spinner;
+			e('examples').onchange = function () { set_json(e('examples').value); };
 		}, false);
 	</script>
 	<style type="text/css">
 		body {color:lightgray;background-color:black;}
 		canvas {border:1px solid cyan; margin-top:3px;}
 		.spinner { width:3em; }
+		#settings_table{border-collapse:collapse;margin:10px 0px;table-layout:fixed;width:400px;}
+		#settings_table td {padding:0px 5px;}
+		#settings_table td+td {border-left:2px solid gray;}
+		#settings_table input {width:100%;}
+		#examples_container {float:right;}
+		#show {text-decoration:underline;}
+		#result {word-wrap:break-word;width:120em;font-family:monospace;}
+		#canvas_table {width:1035px;table-layout:fixed;}
 	</style>
 </head>
 
 <body>
-	<label>Seed: <input type="text" id="seed" value="[x][z][c]e"/></label> <input type="button" id="get_json" value="Get JSON" /> <input type="button" id="set_json" value="Set JSON" /><br /><br />
+	<label>Seed: <input type="text" id="seed" value="[x][z][c]e"/></label> <br /><br />
 	<table>
 		<tr>
+			<td><label for="rules">Rules (one per line):</label></td>
+			<td><label for="func">Associated functions:</label></td>
+			<td>Available functions:</td>
+		</tr>
+		<tr>
 			<td>
-				<label>
-					Rules (one per line):<br />
 <textarea id="rules" rows="10" cols="30">x=xw[D][A]zDc
 z=zs[D][A]eAx
 c=cd[W][S]eWz
@@ -215,11 +227,8 @@ D=Ddr
 A=Aar
 W=Wwr
 S=Ssr</textarea>
-				</label>
 			</td>
 			<td>
-				<label>
-					Associated functions:<br />
 <textarea id="func" rows="10" cols="30">r=rect
 w=mu
 a=ml
@@ -228,45 +237,53 @@ d=mr
 [=push
 ]=pop
 @=rep</textarea>
-				</label>
 			</td>
+			<td><div id="func_help"></div></td>
+		</tr>
+	</table>
+	<table id="settings_table">
+		<tr>
+			<td><label for="iter">Iterations:</label></td>
+			<td><label for="len">Length:</label></td>
+			<td><label for="deg">Angle:</label></td>
+			<td><label for="alpha">Alpha:</label></td>
+		</tr>
+		<tr>
+			<td><input type="text" class="spinner" id="iter" value="5"/></td>
+			<td><input type="text" class="spinner" id="len" value="8"/></td>
+			<td><input type="text" class="spinner" id="deg" value="90"/></td>
+			<td><input type="text" id="alpha" value="0.5"/></td>
+		</tr>
+	</table>
+	<table id="canvas_table">
+		<tr>
 			<td>
-				<label>
-					Available functions:<br />
-					<div id="func_help">
-					</div>
-				</label>
+				<div id="examples_container">
+					<select id="examples">
+						<option value="">- Examples -</option>
+						<option value="{&quot;seed&quot;:&quot;[x][z]v&quot;,&quot;rules&quot;:&quot;x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;15&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;}">&quot;City&quot;</option>
+						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;12&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;}">Continents</option>
+						<option value="{&quot;seed&quot;:&quot;f&quot;,&quot;rules&quot;:&quot;f.6=f[i]f\nf.1=Af\nf.1=Sf\nf.1=Wf\nf.1=Df\ni=[q][e][z]c\nq.2=a[e]r[z]q\nq.8=qa\ne.2=w[q]r[c]e\ne.8=ew\nz.2=s[q]r[c]z\nz.8=zs\nc.2=d[e]r[z]c\nc.8=cd\nD.4=Dd\nD.6=D\nA.4=Aa\nA.6=A\nW.4=Ww\nW.6=W\nS.4=Ss\nS.6=S&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;20&quot;,&quot;len&quot;:&quot;3&quot;,&quot;deg&quot;:&quot;90&quot;}">Continents 2</option>
+					</select>
+					<input type="button" id="get_json" value="Get JSON" />
+					<input type="button" id="set_json" value="Set JSON" />
+				</div>
+				<input type="button" value="Calculate" id="calc" />
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<br />Result image: <span id="dl_container"></span><br />
+				<canvas id="cv" width="1024" height="768"></canvas>
+				<br /><br />
+				<div>
+					<span id="show">Show result string</span>:<br />
+					<div id="result"></div>
+				</div> 
 			</td>
 		</tr>
 	</table>
 	<br /><br />
-	<label>Iterations: <input type="text" class="spinner" id="iter" value="5"/></label><br /><br />
-	<label>Length: <input type="text" class="spinner" id="len" value="5"/></label><br /><br />
-	<label>Angle: <input type="text" class="spinner" id="deg" value="90"/></label><br /><br />
-	<!-- <input type="button" value="Calculate Previous" id="prev" /> -->
-	<input type="button" value="Calculate" id="calc" />
-	<!-- <input type="button" value="Calculate Next" id="next" /> -->
-	<br />Result image: <span id="dl_container"></span><br />
-	<canvas id="cv" width="1024" height="768"></canvas>
 	<br /><br />
-	<div>
-		<span id="show" style="text-decoration:underline;">Show result string</span>:<br />
-		<div id="result" style="word-wrap:break-word;width:120em;font-family:monospace;">
-		</div>
-	</div> 
-	<br /><br />
-	<br /><br />
-	<!--
-samples
-====================
-"city"
-{"seed":"[x][z]v","rules":"x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop","iter":"15","len":"2","deg":"90"}
-"island-ish/blob thing"
-{"seed":"[x][z][c]e","rules":"x.6=xw[D][A]zDc\nx.4=x\nz.6=zs[D][A]eAx\nz.4=z\nc.6=cd[W][S]eWz\nc.4=c\ne.6=ea[W]S[S]xc\ne.4=e\nD=Ddr\nA=Aar\nW=Wwr\nS=Ssr","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"12","len":"2","deg":"90"}
-"blobs with randomness!!!!; not liny"
-{"seed":"[x][z][c]e","rules":"x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"12","len":"2","deg":"90"}
-"above ?skewed? in some way maybe, not bad ether"
-{"seed":"[x][z][c]e","rules":"x.5=xrazDc\nx.5=x\nz.5=zrweAx\nz.5=z\nc.5=crseWz\nc.5=c\ne.5=erdSxc\ne.5=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss","func":"r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep","iter":"15","len":"2","deg":"90"}
-	-->
 </body>
 </html>
