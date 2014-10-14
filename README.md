@@ -1,7 +1,7 @@
 lsys
 ====
 
-L-system explorer in javascript
+L-system explorer in javascript (*currently only supports "latish" Firefox, for ease of development :)*)
 
 Personal utility for explorin L-systems, for finding parameters that coudld be
 used to procedurally generate some stuff, like maps for freeciv or dungoens for
