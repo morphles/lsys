@@ -3,8 +3,9 @@ var funcs = {
 		funcs.rep = funcs.fwd;
 		var nx = x + Math.cos(a) * l;
 		var ny = y + Math.sin(a) * l;
-		ctx.moveTo(x, y);
-		ctx.lineTo(nx, ny);
+		console.log(nx, ny);
+		ctx.moveTo(x + 0.5, y + 0.5);//+0.5 cause web is mega retarded again!
+		ctx.lineTo(nx + 0.5, ny + 0.5);
 		return [nx, ny, a, l];
 	},
 
@@ -83,4 +84,10 @@ function ran(a) {//maybe can be simplified; maybe using non cumulative probabili
 	var r = Math.random();
 	for (i = 0, j = 0; (r > j) && (i < a.length); j = a[i], i++);
 	return Math.max(i - 1, 0);
+}
+
+function spinner (ev) {
+	var magnitude = Math.abs(ev.target.value) < 1 ? 0.1 : 1
+	ev.target.value = ((+ev.target.value) + (ev.deltaY > 0 ? -1 : 1) * magnitude).toFixed(1);
+	ev.preventDefault();
 }

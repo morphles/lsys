@@ -19,7 +19,8 @@
 			ctx.rect( 0 , 0 , w , h );
 			ctx.clip();
 			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
-			ctx.strokeStyle = "rgba(100,200,100,1)";
+			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
+			//ctx.lineWidth = 1;
 
 			dl = 1;
 			da = Math.PI / 180 * e('deg').value;
@@ -28,7 +29,10 @@
 			ca = ia; x = w / 2; y = h / 2; l = e('len').value;
 			for (i = 0; i < s.length; i++) {
 				ctx.beginPath();
-				[x, y, ca, l] = typeof funcs[assocc[s[i]]] === 'function' ? funcs[assocc[s[i]]](x, y, ca, l, ctx, da, dl) : [x, y, ca, l];
+				var func_list = assocc[s[i]];
+				for (k in func_list) {
+					[x, y, ca, l] = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](x, y, ca, l, ctx, da, dl) : [x, y, ca, l];
+				}
 				ctx.stroke();
 			}
 		}
@@ -68,7 +72,10 @@
 
 			e('func').value.split("\n").forEach(function (e) {
 				var parts = e.split("=");
-				assocc[parts[0]] = parts[1];
+				if (typeof assocc[parts[0]] == 'undefined') {
+					assocc[parts[0]] = [];
+				}
+				assocc[parts[0]].push(parts[1]);
 			});
 
 			draw(s, assocc);
@@ -78,29 +85,18 @@
 
 		function get_json() {
 			alert(JSON.stringify({
-				'seed':e('seed').value,
-				'rules':e('rules').value,
-				'func':e('func').value,
-				'iter':e('iter').value,
-				'len':e('len').value,
-				'deg':e('deg').value,
+				'seed':e('seed').value, 'rules':e('rules').value, 'func':e('func').value,
+				'iter':e('iter').value, 'len':e('len').value, 'deg':e('deg').value, 'alpha':e('alpha').value,
 			}));
 		}
 
 		function set_json(d) {
-			if (!d) {
-				return;
-			}
+			if (!d) return;
 			d = JSON.parse(d);
-			e('seed').value = d['seed'];
-			e('rules').value = d['rules'];
-			e('func').value = d['func'];
-			e('iter').value = d['iter'];
-			e('len').value = d['len'];
-			e('deg').value = d['deg'];
+			for (k in fields = ['seed', 'rules', 'func', 'iter', 'len', 'deg', 'alpha']) {
+				e(fields[k]).value = d[fields[k]];
+			}
 		}
-
-		function spinner (ev) { ev.target.value = (+ev.target.value) + (ev.deltaY > 0 ? -1 : 1); ev.preventDefault(); }
 
 		document.addEventListener('DOMContentLoaded', function () {
 			e('calc').onclick = calc;
@@ -110,8 +106,9 @@
 			}
 			e('get_json').onclick = get_json;
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
-			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = spinner;
+			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = e('alpha').onwheel = spinner;
 			e('examples').onchange = function () { set_json(e('examples').value); };
+			//e('cv').getContext('2d').translate(0.5, 0.5);
 		}, false);
 	</script>
 	<style type="text/css">
@@ -137,7 +134,7 @@
 				<label for="rules">Rules (one per line) <abbr title="<character>[.<probability>]=<replacement>; examples: &quot;a=[d]f&quot;;&quot;a.5=ab&quot;. Probabilities are not checked to add up to 1, if they are less, last defined has probability of 1 - <all other probabilities>, entries that appear after probabilities that take total above 1 will never happen. Characters are case sensitive.">?</abbr>:</label>
 			</td>
 			<td>
-				<label for="func">Associated functions <abbr title="<character>=<func name>. Fucn names are those listed in &quot;Availabe functions&quot;. Not all used characters have to have functions assigned, unnasigned characters do not do anything, though of course they can impact evolution in rules.">?</abbr>:</label>
+				<label for="func">Associated functions <abbr title="<character>=<func name>. Fucn names are those listed in &quot;Availabe functions&quot;. Not all used characters have to have functions assigned, unnasigned characters do not do anything, though of course they can impact evolution in rules. Same character can have multiple function associated with it, they will be executed in order they are defined.">?</abbr>:</label>
 			</td>
 			<td>Available functions:</td>
 		</tr>
@@ -185,9 +182,15 @@ d=mr
 				<div id="examples_container">
 					<select id="examples">
 						<option value="">- Examples -</option>
-						<option value="{&quot;seed&quot;:&quot;[x][z]v&quot;,&quot;rules&quot;:&quot;x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;15&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;}">&quot;City&quot;</option>
-						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;12&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;}">Continents</option>
-						<option value="{&quot;seed&quot;:&quot;f&quot;,&quot;rules&quot;:&quot;f.6=f[i]f\nf.1=Af\nf.1=Sf\nf.1=Wf\nf.1=Df\ni=[q][e][z]c\nq.2=a[e]r[z]q\nq.8=qa\ne.2=w[q]r[c]e\ne.8=ew\nz.2=s[q]r[c]z\nz.8=zs\nc.2=d[e]r[z]c\nc.8=cd\nD.4=Dd\nD.6=D\nA.4=Aa\nA.6=A\nW.4=Ww\nW.6=W\nS.4=Ss\nS.6=S&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;20&quot;,&quot;len&quot;:&quot;3&quot;,&quot;deg&quot;:&quot;90&quot;}">Continents 2</option>
+						<option value="{&quot;seed&quot;:&quot;0&quot;,&quot;rules&quot;:&quot;1=11\n0=1[0]0&quot;,&quot;func&quot;:&quot;1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;45.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: basic tree</option>
+						<option value="{&quot;seed&quot;:&quot;F&quot;,&quot;rules&quot;:&quot;F=F+F-F-F+F&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;3.0&quot;,&quot;len&quot;:&quot;5.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Koch curve</option>
+						<option value="{&quot;seed&quot;:&quot;A&quot;,&quot;rules&quot;:&quot;A=B-A-B\nB=A+B+A&quot;,&quot;func&quot;:&quot;A=fwd\nB=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;60.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Sierpinski triangle</option>
+						<option value="{&quot;seed&quot;:&quot;FX&quot;,&quot;rules&quot;:&quot;X=X+YF\nY=FX-Y&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;12.0&quot;,&quot;len&quot;:&quot;4.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Dragon curve</option>
+						<option value="{&quot;seed&quot;:&quot;X&quot;,&quot;rules&quot;:&quot;F=FF\nX=F-[[X]+X]+F[+FX]-X&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;5.0&quot;,&quot;len&quot;:&quot;4.0&quot;,&quot;deg&quot;:&quot;25.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Fractal plant</option>
+						<option value="{&quot;seed&quot;:&quot;[x][z]v&quot;,&quot;rules&quot;:&quot;x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;15&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.4&quot;}">&quot;City&quot;</option>
+						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;12&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents</option>
+						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x=xw[D][A]zDc\nz=zs[D][A]eAx\nc=cd[W][S]eWz\ne=ea[W]S[S]xc\nD=Ddr\nA=Aar\nW=Wwr\nS=Ssr&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;6.0&quot;,&quot;len&quot;:&quot;8&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents Base</option>
+						<option value="{&quot;seed&quot;:&quot;f&quot;,&quot;rules&quot;:&quot;f.6=f[i]f\nf.1=Af\nf.1=Sf\nf.1=Wf\nf.1=Df\ni=[q][e][z]c\nq.2=a[e]r[z]q\nq.8=qa\ne.2=w[q]r[c]e\ne.8=ew\nz.2=s[q]r[c]z\nz.8=zs\nc.2=d[e]r[z]c\nc.8=cd\nD.4=Dd\nD.6=D\nA.4=Aa\nA.6=A\nW.4=Ww\nW.6=W\nS.4=Ss\nS.6=S&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;20&quot;,&quot;len&quot;:&quot;3&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents 2</option>
 					</select>
 					<input type="button" id="get_json" value="Get JSON" />
 					<input type="button" id="set_json" value="Set JSON" />
@@ -197,17 +200,11 @@ d=mr
 		</tr>
 		<tr>
 			<td>
-				<br />Result image: <span id="dl_container"></span><br />
-				<canvas id="cv" width="1024" height="768"></canvas>
-				<br /><br />
-				<div>
-					<span id="show">Show result string</span>:<br />
-					<div id="result"></div>
-				</div> 
+				<br />Result image: <span id="dl_container"></span><br /><canvas id="cv" width="1024" height="768"></canvas><br /><br />
+				<div><span id="show">Show result string</span>:<br /><div id="result"></div></div> 
 			</td>
 		</tr>
 	</table>
-	<br /><br />
-	<br /><br />
+	<br /><br /><br /><br />
 </body>
 </html>
