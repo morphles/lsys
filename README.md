@@ -23,4 +23,4 @@ Features:
   * Set all parameters in on go from JSON string
   * example selection *(collection will probably grow)*
 
-View/try it on github [pages](https://morphles.github.io/lsys/index.html):
+View/try it on github [pages](https://morphles.github.io/lsys/index.html).
