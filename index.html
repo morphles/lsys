@@ -1,80 +1,13 @@
 <html>
 <head>
-	<title>L-Systems</title>
+	<title>L-Systems Explorer</title>
+	<script type="text/javascript" src="funcs.js"></script>
 	<script type="text/javascript">
 		var s;
 		var stack = [];
 		function e(id) {
 			return document.getElementById(id);
 		}
-
-		var funcs = {
-			fwd:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.fwd;
-				var nx = x + Math.cos(a) * l;
-				var ny = y + Math.sin(a) * l;
-				ctx.moveTo(x, y);
-				ctx.lineTo(nx, ny);
-				return [nx, ny, a, l];
-			},
-
-			tl:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.tl;
-				return [x, y, a - da, l];
-			},
-
-			tr:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.tr;
-				return [x, y, a + da, l];
-			},
-
-			push:function (x, y, a, l, ctx, da, dl) {//XXX push/pop rep!
-				//funcs.rep = funcs.push;
-				stack.push([x, y, ca, l]);
-				return [x, y, a, l];
-			},
-
-			pop:function (x, y, a, l, ctx, da, dl) {
-				//funcs.rep = funcs.pop;
-				item = stack.pop();
-				return (typeof item != undefined) > 0 ? item : [x, y, a, l];
-			},
-
-			point:function (x, y, a, l, ctx, da, dl) {
-				//funcs.rep = funcs.rect;
-				ctx.fillRect(x, y, 1, 1);
-				return [x, y, a, l];
-			},
-
-			rect:function (x, y, a, l, ctx, da, dl) {
-				//funcs.rep = funcs.rect;
-				ctx.fillRect(x, y, l, l);
-				return [x, y, a, l];
-			},
-
-			mu:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.mu;
-				return [x, y - (+l), a, l];
-			},
-
-			md:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.md;
-				return [x, y + (+l), a, l];
-			},
-
-			mr:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.mr;
-				return [x + (+l), y, a, l];
-			},
-
-			ml:function (x, y, a, l, ctx, da, dl) {
-				funcs.rep = funcs.ml;
-				return [x - (+l), y, a, l];
-			},
-			rep:function (x, y, a, l, ctx, da, dl) {
-				return [x, y, a, l];//dummy declared to appear in help
-			},
-		};
 
 		function draw(s, assocc) {
 			var w = e('cv').width;
@@ -100,19 +33,10 @@
 			}
 		}
 
-		function ran(a) {//maybe can be simplified; maybe using non cumulative probabilitis; though probably simpler with cumulative
-			var i, j;
-			var r = Math.random();
-			for (i = 0, j = 0; (r > j) && (i < a.length); j = a[i], i++);
-			return Math.max(i - 1, 0);
-		}
-
 		function calc() {
 			e('result').innerHTML = '';
 			s = e('seed').value;
 			var n = e('iter').value;
-			//sessionStorage.setItem("seed", s);
-			//sessionStorage.setItem("rules", e('rules').value);
 			var rs = {};
 			var assocc = {};
 			var ns = '';
@@ -180,13 +104,9 @@
 
 		document.addEventListener('DOMContentLoaded', function () {
 			e('calc').onclick = calc;
-			//e('seed').value = sessionStorage.getItem("seed");
-			//e('rules').value = sessionStorage.getItem("rules");
 			e('show').onclick = function() { e('result').innerHTML = s; };
-			//e('next').onclick = function () { e('iter').value = (+e('iter').value) + 1; calc(); };
-			//e('prev').onclick = function () { e('iter').value = (+e('iter').value) - 1; calc(); };
 			for (prop in funcs) {
-				e('func_help').innerHTML = e('func_help').innerHTML + prop + ", ";
+				e('func_help').innerHTML = e('func_help').innerHTML + '<abbr title="' + func_help[prop] + '">' + prop  + '</abbr>, ';
 			}
 			e('get_json').onclick = get_json;
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
@@ -213,8 +133,12 @@
 	<label>Seed: <input type="text" id="seed" value="[x][z][c]e"/></label> <br /><br />
 	<table>
 		<tr>
-			<td><label for="rules">Rules (one per line):</label></td>
-			<td><label for="func">Associated functions:</label></td>
+			<td>
+				<label for="rules">Rules (one per line) <abbr title="<character>[.<probability>]=<replacement>; examples: &quot;a=[d]f&quot;;&quot;a.5=ab&quot;. Probabilities are not checked to add up to 1, if they are less, last defined has probability of 1 - <all other probabilities>, entries that appear after probabilities that take total above 1 will never happen. Characters are case sensitive.">?</abbr>:</label>
+			</td>
+			<td>
+				<label for="func">Associated functions <abbr title="<character>=<func name>. Fucn names are those listed in &quot;Availabe functions&quot;. Not all used characters have to have functions assigned, unnasigned characters do not do anything, though of course they can impact evolution in rules.">?</abbr>:</label>
+			</td>
 			<td>Available functions:</td>
 		</tr>
 		<tr>
