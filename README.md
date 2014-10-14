@@ -5,7 +5,7 @@ L-system explorer in javascript
 
 Personal utility for explorin L-systems, for finding parameters that coudld be
 used to procedurally generate some stuff, like maps for freeciv or dungoens for
-some RPG.
+some roguelikes or something similar.
 
 Features:
   * Seed entry
@@ -21,4 +21,4 @@ Features:
   * Image download
   * Get all parameters as JSON string
   * Set all parameters in on go from JSON string
-  * *(planned)* example selection
+  * example selection *(collection will probably grow)*
