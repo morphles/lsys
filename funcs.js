@@ -1,9 +1,18 @@
+function e(id) {
+	return document.getElementById(id);
+}
+
+var dummy_ctx = {
+	moveTo:function () {},
+	lineTo:function () {},
+	fillRect:function () {},
+};
+
 var funcs = {
 	fwd:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.fwd;
 		var nx = x + Math.cos(a) * l;
 		var ny = y + Math.sin(a) * l;
-		console.log(nx, ny);
 		ctx.moveTo(x + 0.5, y + 0.5);//+0.5 cause web is mega retarded again!
 		ctx.lineTo(nx + 0.5, ny + 0.5);
 		return [nx, ny, a, l];
@@ -64,6 +73,7 @@ var funcs = {
 		return [x, y, a, l];//dummy declared to appear in help
 	},
 };
+
 var func_help = {
 	fwd:'Move forward by &quot;Length&quot; drawing a line',
 	tl:'Turn left by &quot;Angle&quot;',
