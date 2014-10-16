@@ -8,6 +8,13 @@ var dummy_ctx = {
 	fillRect:function () {},
 };
 
+function createOffscreenCanvas(w, h){
+	var c = document.createElement('canvas');
+	c.width = w;
+	c.height = h;
+	return c;
+}
+
 var funcs = {
 	fwd:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.fwd;
