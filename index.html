@@ -5,18 +5,25 @@
 	<script type="text/javascript">
 		var s;
 		var stack = [];
+		var bc;//buffer canvas
+		var bw, bh;
+		var px, py;
+		var msx, msy;
+		var w;
+		var h;
+		var dragging = false;
+
+		function putimg() {
+			e('cv').getContext('2d').fillStyle = "rgba(0,0,0,1)";
+			e('cv').getContext('2d').fillRect( 0 , 0 , w , h );
+			e('cv').getContext('2d').rect( 0 , 0 , w , h );
+			e('cv').getContext('2d').clip();
+			e('cv').getContext('2d').drawImage(bc, px, py);
+		}
 
 		function draw(s, assocc) {
-			var w = e('cv').width;
-			var h = e('cv').height;
-			var ctx = e('cv').getContext('2d');
+			//var ctx = e('cv').getContext('2d');
 			var alpha = e('alpha').value;
-			ctx.fillStyle = "rgba(0,0,0,1)";
-			ctx.fillRect( 0 , 0 , w , h );
-			ctx.rect( 0 , 0 , w , h );
-			ctx.clip();
-			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
-			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
 
 			dl = 1;
 			da = Math.PI / 180 * e('deg').value;
@@ -31,7 +38,15 @@
 					[minx, miny, maxx, maxy] = [minx > x ? x : minx, miny > y ? y : miny, maxx < x ? x : maxx, maxy < y ? y : maxy];
 				}
 			}
-			ca = ia; x = (w - minx - maxx) / 2; y = (h - miny - maxy) / 2; l = e('len').value;
+			bw = maxx - minx;
+			bh = maxy - miny;
+			bc = createOffscreenCanvas(bw, bh);//XXX there some cuttoff, see with sierpinski
+			ctx = bc.getContext('2d');
+			ctx.fillStyle = "rgba(0,0,0,1)";
+			ctx.fillRect( 0 , 0 , w , h );
+			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
+			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
+			ca = ia; x = -minx; y = -miny; l = e('len').value;
 			for (i = 0; i < s.length; i++) {
 				ctx.beginPath();
 				var func_list = assocc[s[i]];
@@ -40,6 +55,11 @@
 				}
 				ctx.stroke();
 			}
+
+			px = (w - bw) / 2;
+			py = (h - bh) / 2;
+
+			putimg();
 		}
 
 		function calc() {
@@ -104,6 +124,8 @@
 		}
 
 		document.addEventListener('DOMContentLoaded', function () {
+			w = e('cv').width;
+			h = e('cv').height;
 			e('calc').onclick = calc;
 			e('show').onclick = function() { e('result').innerHTML = s; };
 			for (prop in funcs) {
@@ -113,6 +135,21 @@
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
 			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = e('alpha').onwheel = spinner;
 			e('examples').onchange = function () { set_json(e('examples').value); };
+
+			e('cv').onmousedown = function (e) { dragging = true; msx = e.clientX; msy = e.clientY; };
+			e('cv').onmouseup = function () { dragging = false; };
+			e('cv').onmout = function () { dragging = false; };
+			e('cv').onmousemove = function (e) {
+				if (dragging) {
+					var dx = msx - e.clientX;
+					var dy = msy - e.clientY;
+					px -= dx;
+					py -= dy;
+					msx = e.clientX;
+					msy = e.clientY;
+					putimg();
+				}
+			};
 		}, false);
 	</script>
 	<style type="text/css">
