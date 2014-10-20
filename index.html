@@ -4,14 +4,12 @@
 	<script type="text/javascript" src="funcs.js"></script>
 	<script type="text/javascript">
 		//XXX way too many globals
-		var s;
 		var stack = [];
 		var bc;//buffer canvas
 		var bw, bh;
 		var px, py;
 		var msx, msy;
-		var w;
-		var h;
+		var w, h;
 		var dragging = false;
 
 		function putimg() {
@@ -22,63 +20,32 @@
 			e('cv').getContext('2d').drawImage(bc, px, py);
 		}
 
-		function evolve_string(s, rules, iterations) {
-			var ns, p, i, j, idx;
-			for (i = 0; i < iterations; i++) {
-				ns = '';
-				for (j = 0; j < s.length; j++) {
-					p = rules[s[j]];
-					idx = p ? ran(p['ps']) : 0;
-					ns = ns + (p ? p['rs'][idx] : s[j]);
-				}
-				s = ns;
-			}
-			return s;
+		function make_canvas(w, h, alpha) {
+			var canvas = createOffscreenCanvas(w, h);
+			var ctx = canvas.getContext('2d');//XXX there some cuttoff, see with sierpinski
+			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
+			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
+			return canvas;
 		}
 
-		function parse_rules(rstring) {
-			var lhs, rhs, chr, prob, rs = {}, arr;
-
-			rstring.split("\n").forEach(function (e) {//XXX mozilla specific multiple asignments follow XXX
-				[lhs, rhs] = e.split("=");
-				[chr, prob] = lhs.split(".");
-				if (typeof rs[chr] == 'undefined') {
-					rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
+		function draw_on_canvas(s, ctx, funcs, assocc, x, y, ca, l, da) {
+			var i, k, func_list;
+			ctx.beginPath();
+			for (i = 0; i < s.length; i++) {
+				func_list = assocc[s[i]];
+				for (k in func_list) {
+					[x, y, ca, l] = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](x, y, ca, l, ctx, da, 1) : [x, y, ca, l];
 				}
-				rs[chr]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
-				rs[chr]['rs'].push(rhs);
-			});
-
-			for (chr in rs) {
-				arr = rs[chr]['ps'].slice(0);
-				//changes probabilities to cumulative, XXX might be a good place for above mentioned validation; Might not be needed if ran() could be reworked to work with non cumulative probabilities XXX
-				rs[chr]['ps'] = arr.reduce(function (p, c, i) { p.push((i ? p[i - 1] : 0) + c); return p;}, []);
 			}
-
-			return rs;
-		}
-
-		function parse_funcs(fstring) {
-			var parts, assocc = {};
-			fstring.split("\n").forEach(function (e) {
-				parts = e.split("=");
-				if (typeof assocc[parts[0]] == 'undefined') {
-					assocc[parts[0]] = [];
-				}
-				assocc[parts[0]].push(parts[1]);
-			});
-			return assocc;
+			ctx.stroke();
 		}
 
 		function draw(s, assocc) {
-			//var ctx = e('cv').getContext('2d');
 			var alpha = e('alpha').value;
 
-			dl = 1;
-			da = Math.PI / 180 * e('deg').value;
-			ia = -Math.PI / 2;
+			var dl = 1, da = Math.PI / 180 * e('deg').value;
 
-			ca = ia; x = 0; y = 0; l = e('len').value;
+			ca = -Math.PI / 2; x = 0; y = 0; l = e('len').value;
 			var minx = miny = maxx = maxy = 0;
 			for (i = 0; i < s.length; i++) {
 				var func_list = assocc[s[i]];
@@ -87,23 +54,11 @@
 					[minx, miny, maxx, maxy] = [minx > x ? x : minx, miny > y ? y : miny, maxx < x ? x : maxx, maxy < y ? y : maxy];
 				}
 			}
-			bw = maxx - minx;
-			bh = maxy - miny;
-			bc = createOffscreenCanvas(bw, bh);//XXX there some cuttoff, see with sierpinski
-			ctx = bc.getContext('2d');
-			ctx.fillStyle = "rgba(0,0,0,1)";
-			ctx.fillRect( 0 , 0 , w , h );
-			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
-			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
-			ca = ia; x = -minx; y = -miny; l = e('len').value;
-			for (i = 0; i < s.length; i++) {
-				ctx.beginPath();
-				var func_list = assocc[s[i]];
-				for (k in func_list) {
-					[x, y, ca, l] = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](x, y, ca, l, ctx, da, dl) : [x, y, ca, l];
-				}
-				ctx.stroke();
-			}
+
+			bw = maxx - minx + 2;
+			bh = maxy - miny + 2;
+			bc = make_canvas(bw, bh, alpha);
+			draw_on_canvas(s, bc.getContext('2d'), funcs, assocc, -minx, -miny, -Math.PI / 2, e('len').value, da);
 
 			px = (w - bw) / 2;
 			py = (h - bh) / 2;
@@ -122,21 +77,6 @@
 				parse_funcs(e('func').value)
 			);
 			e('dl_container').innerHTML = '<a href="' + e('cv').toDataURL("image/png") + '">Download</a>';
-		}
-
-		function get_json() {
-			alert(JSON.stringify({
-				'seed':e('seed').value, 'rules':e('rules').value, 'func':e('func').value,
-				'iter':e('iter').value, 'len':e('len').value, 'deg':e('deg').value, 'alpha':e('alpha').value,
-			}));
-		}
-
-		function set_json(d) {
-			if (!d) return;
-			d = JSON.parse(d);
-			for (k in fields = ['seed', 'rules', 'func', 'iter', 'len', 'deg', 'alpha']) {
-				e(fields[k]).value = d[fields[k]];
-			}
 		}
 
 		document.addEventListener('DOMContentLoaded', function () {
