@@ -41,24 +41,14 @@
 		}
 
 		function draw(s, assocc) {
-			var alpha = e('alpha').value;
+			var da = Math.PI / 180 * e('deg').value;
+			dummy_ctx.reset();
+			draw_on_canvas(s, dummy_ctx, funcs, assocc, 0, 0, -Math.PI / 2, +e('len').value, da);
 
-			var dl = 1, da = Math.PI / 180 * e('deg').value;
-
-			ca = -Math.PI / 2; x = 0; y = 0; l = e('len').value;
-			var minx = miny = maxx = maxy = 0;
-			for (i = 0; i < s.length; i++) {
-				var func_list = assocc[s[i]];
-				for (k in func_list) {
-					[x, y, ca, l] = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](x, y, ca, l, dummy_ctx, da, dl) : [x, y, ca, l];
-					[minx, miny, maxx, maxy] = [minx > x ? x : minx, miny > y ? y : miny, maxx < x ? x : maxx, maxy < y ? y : maxy];
-				}
-			}
-
-			bw = maxx - minx + 2;
-			bh = maxy - miny + 2;
-			bc = make_canvas(bw, bh, alpha);
-			draw_on_canvas(s, bc.getContext('2d'), funcs, assocc, -minx, -miny, -Math.PI / 2, e('len').value, da);
+			bw = dummy_ctx.maxx - dummy_ctx.minx + 2;
+			bh = dummy_ctx.maxy - dummy_ctx.miny + 2;
+			bc = make_canvas(bw, bh, +e('alpha').value);
+			draw_on_canvas(s, bc.getContext('2d'), funcs, assocc, -dummy_ctx.minx, -dummy_ctx.miny, -Math.PI / 2, +e('len').value, da);
 
 			px = (w - bw) / 2;
 			py = (h - bh) / 2;
@@ -80,8 +70,8 @@
 		}
 
 		document.addEventListener('DOMContentLoaded', function () {
-			w = e('cv').width;
-			h = e('cv').height;
+			w = +e('cv').width;
+			h = +e('cv').height;
 			e('calc').onclick = calc;
 			e('show').onclick = function() { e('result').innerHTML = s; };//XXX this does not work after spliting calc, there no global anymore, fix it XXX
 			for (prop in funcs) {

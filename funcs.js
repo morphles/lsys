@@ -3,9 +3,21 @@ function e(id) {
 }
 
 var dummy_ctx = {
-	moveTo:function () {},
-	lineTo:function () {},
-	fillRect:function () {},
+	minx:0, maxx:0, miny:0, maxy:0,
+	reset:function() {
+		[this.minx, this.miny, this.maxx, this.maxy] = [0, 0, 0, 0];
+	},
+	moveTo:function (x, y) {
+		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < x ? x : this.maxx, this.maxy < y ? y : this.maxy];
+	},
+	lineTo:function (x, y) {
+		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < x ? x : this.maxx, this.maxy < y ? y : this.maxy];
+	},
+	fillRect:function (x, y, w, h) {
+		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < (x + w) ? (x + w) : this.maxx, this.maxy < (y + h) ? (y + h) : this.maxy];
+	},
+	beginPath:function() {},
+	stroke:function() {},
 };
 
 function createOffscreenCanvas(w, h){
