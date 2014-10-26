@@ -3,26 +3,32 @@
 	<title>L-Systems Explorer</title>
 	<script type="text/javascript" src="funcs.js"></script>
 	<script type="text/javascript">
-		//XXX way too many globals
-		var stack = [];
-		var bc;//buffer canvas
-		var bw, bh;
-		var px, py;
-		var msx, msy;
 		var w, h;
-		var dragging = false;
+
+		var buffer = {
+			c:null,//canvas object itself
+			w:0, h:0,//dimensions
+			x:0, y:0,//position DOM canvas
+		};
+
+		var mouse = {
+			dragging:false,//is mouse being dragged
+			px:0, py:0,//previous mouse position when dragging
+		};
 
 		function putimg() {
 			e('cv').getContext('2d').fillStyle = "rgba(0,0,0,1)";
-			e('cv').getContext('2d').fillRect( 0 , 0 , w , h );
-			e('cv').getContext('2d').rect( 0 , 0 , w , h );
+			e('cv').getContext('2d').fillRect(0, 0, w, h);
+			e('cv').getContext('2d').rect(0, 0, w, h);
 			e('cv').getContext('2d').clip();
-			e('cv').getContext('2d').drawImage(bc, px, py);
+			e('cv').getContext('2d').drawImage(buffer.c, buffer.x, buffer.y);
 		}
 
 		function make_canvas(w, h, alpha) {
 			var canvas = createOffscreenCanvas(w, h);
-			var ctx = canvas.getContext('2d');//XXX there some cuttoff, see with sierpinski
+			var ctx = canvas.getContext('2d');
+			ctx.fillStyle = "rgba(0,0,0,1)";
+			ctx.fillRect(0, 0, w, h);
 			ctx.fillStyle = "rgba(100,200,100," + alpha + ")";
 			ctx.strokeStyle = "rgba(100,200,100," + alpha + ")";
 			return canvas;
@@ -45,53 +51,50 @@
 			dummy_ctx.reset();
 			draw_on_canvas(s, dummy_ctx, funcs, assocc, 0, 0, -Math.PI / 2, +e('len').value, da);
 
-			bw = dummy_ctx.maxx - dummy_ctx.minx + 2;
-			bh = dummy_ctx.maxy - dummy_ctx.miny + 2;
-			bc = make_canvas(bw, bh, +e('alpha').value);
-			draw_on_canvas(s, bc.getContext('2d'), funcs, assocc, -dummy_ctx.minx, -dummy_ctx.miny, -Math.PI / 2, +e('len').value, da);
+			buffer.w = dummy_ctx.maxx - dummy_ctx.minx + 2;
+			buffer.h = dummy_ctx.maxy - dummy_ctx.miny + 2;
+			//XXX rounding and addition is to get sharp lines and prevent cuttof at canvas edges. Maybe there are nicer solutions
+			buffer.c = make_canvas(Math.round(buffer.w + 2), Math.round(buffer.h + 2), +e('alpha').value);
+			draw_on_canvas(s, buffer.c.getContext('2d'), funcs, assocc, Math.round(-dummy_ctx.minx) + 1, Math.round(-dummy_ctx.miny) + 1, -Math.PI / 2, +e('len').value, da);
 
-			px = (w - bw) / 2;
-			py = (h - bh) / 2;
+			buffer.x = (w - buffer.w) / 2;
+			buffer.y = (h - buffer.h) / 2;
 
 			putimg();
 		}
 
 		function calc() {
-			e('result').innerHTML = '';
-			draw(
-				evolve_string(
-					e('seed').value,
-					parse_rules(e('rules').value),
-					e('iter').value
-				),
-				parse_funcs(e('func').value)
-			);
-			e('dl_container').innerHTML = '<a href="' + e('cv').toDataURL("image/png") + '">Download</a>';
+			e('result').style.display = 'none';
+			e('result').innerHTML = evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);
+			draw(e('result').innerHTML, parse_funcs(e('func').value));
+			e('dl_container').innerHTML = '<a href="' + buffer.c.toDataURL("image/png") + '">Download</a>';
 		}
 
 		document.addEventListener('DOMContentLoaded', function () {
 			w = +e('cv').width;
 			h = +e('cv').height;
 			e('calc').onclick = calc;
-			e('show').onclick = function() { e('result').innerHTML = s; };//XXX this does not work after spliting calc, there no global anymore, fix it XXX
+			e('show').onclick = function() { e('result').style.display = 'block'; };
 			for (prop in funcs) {
-				e('func_help').innerHTML = e('func_help').innerHTML + '<abbr title="' + func_help[prop] + '">' + prop  + '</abbr>, ';
+				if (typeof funcs[prop] == 'function') {
+					e('func_help').innerHTML = e('func_help').innerHTML + '<abbr title="' + func_help[prop] + '">' + prop  + '</abbr>, ';
+				}
 			}
 			e('get_json').onclick = get_json;
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
 			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = e('alpha').onwheel = spinner;
 			e('examples').onchange = function () { set_json(e('examples').value); };
 
-			e('cv').onmousedown = function (e) { dragging = true; msx = e.clientX; msy = e.clientY; };
-			e('cv').onmouseup = e('cv').onmout = function () { dragging = false; }; //XXX somehow does not work totally as expected
+			e('cv').onmousedown = function (e) { mouse.dragging = true; mouse.px = e.clientX; mouse.py = e.clientY; };
+			e('cv').onmouseup = e('cv').onmout = function () { mouse.dragging = false; }; //XXX somehow does not work totally as expected
 			e('cv').onmousemove = function (e) {
-				if (dragging) {
-					var dx = msx - e.clientX;
-					var dy = msy - e.clientY;
-					px -= dx;
-					py -= dy;
-					msx = e.clientX;
-					msy = e.clientY;
+				if (mouse.dragging) {
+					var dx = mouse.px - e.clientX;
+					var dy = mouse.py - e.clientY;
+					buffer.x -= dx;
+					buffer.y -= dy;
+					mouse.px = e.clientX;
+					mouse.py = e.clientY;
 					putimg();
 				}
 			};

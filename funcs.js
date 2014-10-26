@@ -37,57 +37,46 @@ var funcs = {
 		ctx.lineTo(nx + 0.5, ny + 0.5);
 		return [nx, ny, a, l];
 	},
-
 	tl:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.tl;
 		return [x, y, a - da, l];
 	},
-
 	tr:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.tr;
 		return [x, y, a + da, l];
 	},
-
 	push:function (x, y, a, l, ctx, da, dl) {//XXX push/pop rep!
 		funcs.stack.push([x, y, a, l]);
 		return [x, y, a, l];
 	},
-
 	pop:function (x, y, a, l, ctx, da, dl) {
 		item = funcs.stack.pop();
 		return (typeof item != undefined) > 0 ? item : [x, y, a, l];
 	},
-
 	point:function (x, y, a, l, ctx, da, dl) {
 		ctx.fillRect(x, y, 1, 1);
 		return [x, y, a, l];
 	},
-
 	rect:function (x, y, a, l, ctx, da, dl) {
 		ctx.fillRect(x, y, l, l);
 		return [x, y, a, l];
 	},
-
 	mu:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.mu;
 		return [x, y - (+l), a, l];
 	},
-
 	md:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.md;
 		return [x, y + (+l), a, l];
 	},
-
 	mr:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.mr;
 		return [x + (+l), y, a, l];
 	},
-
 	ml:function (x, y, a, l, ctx, da, dl) {
 		funcs.rep = funcs.ml;
 		return [x - (+l), y, a, l];
 	},
-
 	rep:function (x, y, a, l, ctx, da, dl) {
 		return [x, y, a, l];//dummy declared to appear in help
 	},
