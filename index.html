@@ -4,6 +4,7 @@
 	<script type="text/javascript" src="funcs.js"></script>
 	<script type="text/javascript">
 		var w, h;
+		var time;
 
 		var buffer = {
 			c:null,//canvas object itself
@@ -63,10 +64,26 @@
 			putimg();
 		}
 
+		function track_time(f) {
+			var ret, time;
+			time = (new Date()).getTime();
+			(function () {
+				return (ret = f()) + (time = (new Date()).getTime() - time);
+			})();
+			return [ret, time];
+		}
+
 		function calc() {
+			e('timing').innerHTML = '';
 			e('result').style.display = 'none';
 			e('result').innerHTML = evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);
-			draw(e('result').innerHTML, parse_funcs(e('func').value));
+
+			[e('result').innerHTML, time] = track_time(function() {return evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);});
+			e('timing').innerHTML = 'Evolving time: ' + (time / 1000) + 's <br>';
+
+
+			[, time] = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
+			e('timing').innerHTML = e('timing').innerHTML + 'Drawing time: ' + (time / 1000) + 's';
 			e('dl_container').innerHTML = '<a href="' + buffer.c.toDataURL("image/png") + '">Download</a>';
 		}
 
@@ -86,7 +103,7 @@
 			e('examples').onchange = function () { set_json(e('examples').value); };
 
 			e('cv').onmousedown = function (e) { mouse.dragging = true; mouse.px = e.clientX; mouse.py = e.clientY; };
-			e('cv').onmouseup = e('cv').onmout = function () { mouse.dragging = false; }; //XXX somehow does not work totally as expected
+			e('cv').onmouseup = e('cv').onmouseout = function () { mouse.dragging = false; };
 			e('cv').onmousemove = function (e) {
 				if (mouse.dragging) {
 					var dx = mouse.px - e.clientX;
@@ -190,6 +207,7 @@ d=mr
 		<tr>
 			<td>
 				Result image: <span id="dl_container"></span><br /><canvas id="cv" width="1024" height="768"></canvas><br /><br />
+				<div id="timing"></div>
 				<div><span id="show">Show result string</span>:<br /><div id="result"></div></div> 
 			</td>
 		</tr>
