@@ -76,10 +76,9 @@
 		function calc() {
 			e('timing').innerHTML = '';
 			e('result').style.display = 'none';
-			e('result').innerHTML = evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);
 
 			[e('result').innerHTML, time] = track_time(function() {return evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);});
-			e('timing').innerHTML = 'Evolving time: ' + (time / 1000) + 's <br>';
+			e('timing').innerHTML = 'Evolving time: ' + (time / 1000) + 's, string lenght: ' + e('result').innerHTML.length + ' <br>';
 
 
 			[, time] = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
