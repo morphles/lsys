@@ -35,13 +35,13 @@
 			return canvas;
 		}
 
-		function draw_on_canvas(s, ctx, funcs, assocc, x, y, ca, l, da) {
+		function draw_on_canvas(s, ctx, funcs, assocc, state) {
 			var i, k, func_list;
 			ctx.beginPath();
 			for (i = 0; i < s.length; i++) {
 				func_list = assocc[s[i]];
 				for (k in func_list) {
-					[x, y, ca, l] = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](x, y, ca, l, ctx, da, 1) : [x, y, ca, l];
+					state = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](ctx, state) : state;
 				}
 			}
 			ctx.stroke();
@@ -50,13 +50,18 @@
 		function draw(s, assocc) {
 			var da = Math.PI / 180 * e('deg').value;
 			dummy_ctx.reset();
-			draw_on_canvas(s, dummy_ctx, funcs, assocc, 0, 0, -Math.PI / 2, +e('len').value, da);
+
+			var state = { x:0, y:0, a:-Math.PI / 2, l:+e('len').value, da:da, dl:1 };
+			draw_on_canvas(s, dummy_ctx, funcs, assocc, state);
+
 
 			buffer.w = dummy_ctx.maxx - dummy_ctx.minx + 2;
 			buffer.h = dummy_ctx.maxy - dummy_ctx.miny + 2;
 			//XXX rounding and addition is to get sharp lines and prevent cuttof at canvas edges. Maybe there are nicer solutions
 			buffer.c = make_canvas(Math.round(buffer.w + 2), Math.round(buffer.h + 2), +e('alpha').value);
-			draw_on_canvas(s, buffer.c.getContext('2d'), funcs, assocc, Math.round(-dummy_ctx.minx) + 1, Math.round(-dummy_ctx.miny) + 1, -Math.PI / 2, +e('len').value, da);
+
+			state = { x:Math.round(-dummy_ctx.minx) + 1, y:Math.round(-dummy_ctx.miny) + 1, a:-Math.PI / 2, l:+e('len').value, da:da, dl:1 };
+			draw_on_canvas(s, buffer.c.getContext('2d'), funcs, assocc, state);
 
 			buffer.x = (w - buffer.w) / 2;
 			buffer.y = (h - buffer.h) / 2;

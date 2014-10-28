@@ -29,56 +29,64 @@ function createOffscreenCanvas(w, h){
 
 var funcs = {
 	stack:[],
-	fwd:function (x, y, a, l, ctx, da, dl) {
+	fwd:function (ctx, s) {
 		funcs.rep = funcs.fwd;
-		var nx = x + Math.cos(a) * l;
-		var ny = y + Math.sin(a) * l;
-		ctx.moveTo(x + 0.5, y + 0.5);//+0.5 cause web is mega retarded again!
+		var nx = s.x + Math.cos(s.a) * s.l;
+		var ny = s.y + Math.sin(s.a) * s.l;
+		ctx.moveTo(s.x + 0.5, s.y + 0.5);//+0.5 cause web is mega retarded again!
 		ctx.lineTo(nx + 0.5, ny + 0.5);
-		return [nx, ny, a, l];
+		s.x = nx;
+		s.y = ny;
+		return s;
 	},
-	tl:function (x, y, a, l, ctx, da, dl) {
+	tl:function (ctx, s) {
 		funcs.rep = funcs.tl;
-		return [x, y, a - da, l];
+		s.a -= s.da;
+		return s;
 	},
-	tr:function (x, y, a, l, ctx, da, dl) {
+	tr:function (ctx, s) {
 		funcs.rep = funcs.tr;
-		return [x, y, a + da, l];
+		s.a += s.da;
+		return s;
 	},
-	push:function (x, y, a, l, ctx, da, dl) {//XXX push/pop rep!
-		funcs.stack.push([x, y, a, l]);
-		return [x, y, a, l];
+	push:function (ctx, s) {//XXX push/pop rep!
+		funcs.stack.push(JSON.parse(JSON.stringify(s)));
+		return s;
 	},
-	pop:function (x, y, a, l, ctx, da, dl) {
+	pop:function (ctx, s) {
 		item = funcs.stack.pop();
-		return (typeof item != undefined) > 0 ? item : [x, y, a, l];
+		return (typeof item != undefined) > 0 ? item : s;
 	},
-	point:function (x, y, a, l, ctx, da, dl) {
-		ctx.fillRect(x, y, 1, 1);
-		return [x, y, a, l];
+	point:function (ctx, s) {
+		ctx.fillRect(s.x, s.y, 1, 1);
+		return s;
 	},
-	rect:function (x, y, a, l, ctx, da, dl) {
-		ctx.fillRect(x, y, l, l);
-		return [x, y, a, l];
+	rect:function (ctx, s) {
+		ctx.fillRect(s.x, s.y, s.l, s.l);
+		return s;
 	},
-	mu:function (x, y, a, l, ctx, da, dl) {
+	mu:function (ctx, s) {
 		funcs.rep = funcs.mu;
-		return [x, y - (+l), a, l];
+		s.y -= +s.l;
+		return s;
 	},
-	md:function (x, y, a, l, ctx, da, dl) {
+	md:function (ctx, s) {
 		funcs.rep = funcs.md;
-		return [x, y + (+l), a, l];
+		s.y += +s.l;
+		return s;
 	},
-	mr:function (x, y, a, l, ctx, da, dl) {
+	mr:function (ctx, s) {
 		funcs.rep = funcs.mr;
-		return [x + (+l), y, a, l];
+		s.x += +s.l;
+		return s;
 	},
-	ml:function (x, y, a, l, ctx, da, dl) {
+	ml:function (ctx, s) {
 		funcs.rep = funcs.ml;
-		return [x - (+l), y, a, l];
+		s.x -= +s.l;
+		return s;
 	},
-	rep:function (x, y, a, l, ctx, da, dl) {
-		return [x, y, a, l];//dummy declared to appear in help
+	rep:function (ctx, s) {
+		return s;//dummy declared to appear in help
 	},
 };
 
