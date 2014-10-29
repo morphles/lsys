@@ -79,15 +79,18 @@
 		}
 
 		function calc() {
+			var track_res;
 			e('timing').innerHTML = '';
 			e('result').style.display = 'none';
 
-			[e('result').innerHTML, time] = track_time(function() {return evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);});
-			e('timing').innerHTML = 'Evolving time: ' + (time / 1000) + 's, string lenght: ' + e('result').innerHTML.length + ' <br>';
+			track_res = track_time(function() {return evolve_string(e('seed').value, parse_rules(e('rules').value), e('iter').value);});
+			e('result').innerHTML = track_res[0];
 
+			e('timing').innerHTML = 'Evolving time: ' + (track_res[1] / 1000) + 's, string lenght: ' + e('result').innerHTML.length + ' <br>';
 
-			[, time] = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
-			e('timing').innerHTML = e('timing').innerHTML + 'Drawing time: ' + (time / 1000) + 's';
+			track_res = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
+
+			e('timing').innerHTML = e('timing').innerHTML + 'Drawing time: ' + (track_res[1] / 1000) + 's';
 			e('dl_container').innerHTML = '<a href="' + buffer.c.toDataURL("image/png") + '">Download</a>';
 		}
 

@@ -5,16 +5,25 @@ function e(id) {
 var dummy_ctx = {
 	minx:0, maxx:0, miny:0, maxy:0,
 	reset:function() {
-		[this.minx, this.miny, this.maxx, this.maxy] = [0, 0, 0, 0];
+		this.minx = this.miny = this.maxx = this.maxy = 0;
 	},
 	moveTo:function (x, y) {
-		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < x ? x : this.maxx, this.maxy < y ? y : this.maxy];
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < x ? x : this.maxx;
+		this.maxy = this.maxy < y ? y : this.maxy;
 	},
 	lineTo:function (x, y) {
-		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < x ? x : this.maxx, this.maxy < y ? y : this.maxy];
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < x ? x : this.maxx;
+		this.maxy = this.maxy < y ? y : this.maxy;
 	},
 	fillRect:function (x, y, w, h) {
-		[this.minx, this.miny, this.maxx, this.maxy] = [this.minx > x ? x : this.minx, this.miny > y ? y : this.miny, this.maxx < (x + w) ? (x + w) : this.maxx, this.maxy < (y + h) ? (y + h) : this.maxy];
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < (x + w) ? (x + w) : this.maxx;
+		this.maxy = this.maxy < (y + h) ? (y + h) : this.maxy;
 	},
 	beginPath:function() {},
 	stroke:function() {},
@@ -133,11 +142,13 @@ function evolve_string(s, rules, iterations) {
 }
 
 function parse_rules(rstring) {
-	var lhs, rhs, chr, prob, rs = {}, arr;
+	var lhs, rhs, chr, prob, rs = {}, arr, tmp;
 
 	rstring.split("\n").forEach(function (e) {//XXX mozilla specific multiple asignments follow XXX
-		[lhs, rhs] = e.split("=");
-		[chr, prob] = lhs.split(".");
+		tmp = e.split("=");
+		lhs = tmp[0]; rhs = tmp[1];
+		tmp = lhs.split(".");
+		chr = tmp[0]; prob = tmp[1];
 		if (typeof rs[chr] == 'undefined') {
 			rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
 		}
