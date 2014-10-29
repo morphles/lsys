@@ -3,9 +3,30 @@ function e(id) {
 }
 
 var dummy_ctx = {
-	moveTo:function () {},
-	lineTo:function () {},
-	fillRect:function () {},
+	minx:0, maxx:0, miny:0, maxy:0,
+	reset:function() {
+		this.minx = this.miny = this.maxx = this.maxy = 0;
+	},
+	moveTo:function (x, y) {
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < x ? x : this.maxx;
+		this.maxy = this.maxy < y ? y : this.maxy;
+	},
+	lineTo:function (x, y) {
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < x ? x : this.maxx;
+		this.maxy = this.maxy < y ? y : this.maxy;
+	},
+	fillRect:function (x, y, w, h) {
+		this.minx = this.minx > x ? x : this.minx;
+		this.miny = this.miny > y ? y : this.miny;
+		this.maxx = this.maxx < (x + w) ? (x + w) : this.maxx;
+		this.maxy = this.maxy < (y + h) ? (y + h) : this.maxy;
+	},
+	beginPath:function() {},
+	stroke:function() {},
 };
 
 function createOffscreenCanvas(w, h){
@@ -16,68 +37,65 @@ function createOffscreenCanvas(w, h){
 }
 
 var funcs = {
-	fwd:function (x, y, a, l, ctx, da, dl) {
+	stack:[],
+	fwd:function (ctx, s) {
 		funcs.rep = funcs.fwd;
-		var nx = x + Math.cos(a) * l;
-		var ny = y + Math.sin(a) * l;
-		ctx.moveTo(x + 0.5, y + 0.5);//+0.5 cause web is mega retarded again!
+		var nx = s.x + Math.cos(s.a) * s.l;
+		var ny = s.y + Math.sin(s.a) * s.l;
+		ctx.moveTo(s.x + 0.5, s.y + 0.5);//+0.5 cause web is mega retarded again!
 		ctx.lineTo(nx + 0.5, ny + 0.5);
-		return [nx, ny, a, l];
+		s.x = nx;
+		s.y = ny;
+		return s;
 	},
-
-	tl:function (x, y, a, l, ctx, da, dl) {
+	tl:function (ctx, s) {
 		funcs.rep = funcs.tl;
-		return [x, y, a - da, l];
+		s.a -= s.da;
+		return s;
 	},
-
-	tr:function (x, y, a, l, ctx, da, dl) {
+	tr:function (ctx, s) {
 		funcs.rep = funcs.tr;
-		return [x, y, a + da, l];
+		s.a += s.da;
+		return s;
 	},
-
-	push:function (x, y, a, l, ctx, da, dl) {//XXX push/pop rep!
-		//funcs.rep = funcs.push;
-		stack.push([x, y, ca, l]);
-		return [x, y, a, l];
+	push:function (ctx, s) {//XXX push/pop rep!
+		funcs.stack.push(JSON.parse(JSON.stringify(s)));
+		return s;
 	},
-
-	pop:function (x, y, a, l, ctx, da, dl) {
-		item = stack.pop();
-		return (typeof item != undefined) > 0 ? item : [x, y, a, l];
+	pop:function (ctx, s) {
+		item = funcs.stack.pop();
+		return (typeof item != undefined) > 0 ? item : s;
 	},
-
-	point:function (x, y, a, l, ctx, da, dl) {
-		ctx.fillRect(x, y, 1, 1);
-		return [x, y, a, l];
+	point:function (ctx, s) {
+		ctx.fillRect(s.x, s.y, 1, 1);
+		return s;
 	},
-
-	rect:function (x, y, a, l, ctx, da, dl) {
-		ctx.fillRect(x, y, l, l);
-		return [x, y, a, l];
+	rect:function (ctx, s) {
+		ctx.fillRect(s.x, s.y, s.l, s.l);
+		return s;
 	},
-
-	mu:function (x, y, a, l, ctx, da, dl) {
+	mu:function (ctx, s) {
 		funcs.rep = funcs.mu;
-		return [x, y - (+l), a, l];
+		s.y -= +s.l;
+		return s;
 	},
-
-	md:function (x, y, a, l, ctx, da, dl) {
+	md:function (ctx, s) {
 		funcs.rep = funcs.md;
-		return [x, y + (+l), a, l];
+		s.y += +s.l;
+		return s;
 	},
-
-	mr:function (x, y, a, l, ctx, da, dl) {
+	mr:function (ctx, s) {
 		funcs.rep = funcs.mr;
-		return [x + (+l), y, a, l];
+		s.x += +s.l;
+		return s;
 	},
-
-	ml:function (x, y, a, l, ctx, da, dl) {
+	ml:function (ctx, s) {
 		funcs.rep = funcs.ml;
-		return [x - (+l), y, a, l];
+		s.x -= +s.l;
+		return s;
 	},
-
-	rep:function (x, y, a, l, ctx, da, dl) {
-		return [x, y, a, l];//dummy declared to appear in help
+	rep:function (ctx, s) {
+		return s;//dummy declared to appear in help
 	},
 };
 
@@ -107,4 +125,69 @@ function spinner (ev) {
 	var magnitude = Math.abs(ev.target.value) < 1 ? 0.1 : 1
 	ev.target.value = ((+ev.target.value) + (ev.deltaY > 0 ? -1 : 1) * magnitude).toFixed(1);
 	ev.preventDefault();
+}
+
+function evolve_string(s, rules, iterations) {
+	var ns, p, i, j, idx;
+	for (i = 0; i < iterations; i++) {
+		ns = '';
+		for (j = 0; j < s.length; j++) {
+			p = rules[s[j]];
+			idx = p ? ran(p['ps']) : 0;
+			ns = ns + (p ? p['rs'][idx] : s[j]);
+		}
+		s = ns;
+	}
+	return s;
+}
+
+function parse_rules(rstring) {
+	var lhs, rhs, chr, prob, rs = {}, arr, tmp;
+
+	rstring.split("\n").forEach(function (e) {//XXX mozilla specific multiple asignments follow XXX
+		tmp = e.split("=");
+		lhs = tmp[0]; rhs = tmp[1];
+		tmp = lhs.split(".");
+		chr = tmp[0]; prob = tmp[1];
+		if (typeof rs[chr] == 'undefined') {
+			rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
+		}
+		rs[chr]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
+		rs[chr]['rs'].push(rhs);
+	});
+
+	for (chr in rs) {
+		arr = rs[chr]['ps'].slice(0);
+		//changes probabilities to cumulative, XXX might be a good place for above mentioned validation; Might not be needed if ran() could be reworked to work with non cumulative probabilities XXX
+		rs[chr]['ps'] = arr.reduce(function (p, c, i) { p.push((i ? p[i - 1] : 0) + c); return p;}, []);
+	}
+
+	return rs;
+}
+
+function parse_funcs(fstring) {
+	var parts, assocc = {};
+	fstring.split("\n").forEach(function (e) {
+		parts = e.split("=");
+		if (typeof assocc[parts[0]] == 'undefined') {
+			assocc[parts[0]] = [];
+		}
+		assocc[parts[0]].push(parts[1]);
+	});
+	return assocc;
+}
+
+function get_json() {
+	alert(JSON.stringify({
+		'seed':e('seed').value, 'rules':e('rules').value, 'func':e('func').value,
+		'iter':e('iter').value, 'len':e('len').value, 'deg':e('deg').value, 'alpha':e('alpha').value,
+	}));
+}
+
+function set_json(d) {
+	if (!d) return;
+	d = JSON.parse(d);
+	for (k in fields = ['seed', 'rules', 'func', 'iter', 'len', 'deg', 'alpha']) {
+		e(fields[k]).value = d[fields[k]];
+	}
 }
