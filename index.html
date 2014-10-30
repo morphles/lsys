@@ -54,7 +54,6 @@
 			var state = { x:0, y:0, a:-Math.PI / 2, l:+e('len').value, da:da, dl:1 };
 			draw_on_canvas(s, dummy_ctx, funcs, assocc, state);
 
-
 			buffer.w = dummy_ctx.maxx - dummy_ctx.minx + 2;
 			buffer.h = dummy_ctx.maxy - dummy_ctx.miny + 2;
 			//XXX rounding and addition is to get sharp lines and prevent cuttof at canvas edges. Maybe there are nicer solutions
@@ -139,6 +138,8 @@
 		#show {text-decoration:underline;}
 		#result {word-wrap:break-word;width:120em;font-family:monospace;}
 		#canvas_table {width:1035px;table-layout:fixed;}
+		#func_help_col {width:200px;}
+		#func_help {vertical-align:top;}
 	</style>
 </head>
 
@@ -152,7 +153,7 @@
 			<td>
 				<label for="func">Associated functions <abbr title="<character>=<func name>. Fucn names are those listed in &quot;Availabe functions&quot;. Not all used characters have to have functions assigned, unnasigned characters do not do anything, though of course they can impact evolution in rules. Same character can have multiple function associated with it, they will be executed in order they are defined.">?</abbr>:</label>
 			</td>
-			<td>Available functions:</td>
+			<td id="func_help_col">Available functions:</td>
 		</tr>
 		<tr>
 			<td><textarea id="rules" rows="10" cols="30"></textarea></td>
