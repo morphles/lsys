@@ -111,7 +111,7 @@ var func_help = {
 
 function ran(a) {
 	var i, r = Math.random();
-	for (i = 0; (r > 0) && (i < a.length); r -= a[i], i++);
+	for (i = 0; (r > 0) && (i < a.length); r -= a[i++]);
 	return i - 1;
 }
 
@@ -127,8 +127,7 @@ function evolve_string(s, rules, iterations) {
 		ns = '';
 		for (j = 0; j < s.length; j++) {
 			p = rules[s[j]];
-			idx = p ? ran(p['ps']) : 0;
-			ns = ns + (p ? p['rs'][idx] : s[j]);
+			ns = ns + (p ? p['rs'][ran(p['ps'])] : s[j]);
 		}
 		s = ns;
 	}
