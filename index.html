@@ -54,7 +54,6 @@
 			var state = { x:0, y:0, a:-Math.PI / 2, l:+e('len').value, da:da, dl:1 };
 			draw_on_canvas(s, dummy_ctx, funcs, assocc, state);
 
-
 			buffer.w = dummy_ctx.maxx - dummy_ctx.minx + 2;
 			buffer.h = dummy_ctx.maxy - dummy_ctx.miny + 2;
 			//XXX rounding and addition is to get sharp lines and prevent cuttof at canvas edges. Maybe there are nicer solutions
@@ -108,6 +107,9 @@
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
 			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = e('alpha').onwheel = spinner;
 			e('examples').onchange = function () { set_json(e('examples').value); };
+			if (!e('rules').value && !e('func').value) {
+				e('examples').onchange();
+			}
 
 			e('cv').onmousedown = function (e) { mouse.dragging = true; mouse.px = e.clientX; mouse.py = e.clientY; };
 			e('cv').onmouseup = e('cv').onmouseout = function () { mouse.dragging = false; };
@@ -136,6 +138,8 @@
 		#show {text-decoration:underline;}
 		#result {word-wrap:break-word;width:120em;font-family:monospace;}
 		#canvas_table {width:1035px;table-layout:fixed;}
+		#func_help_col {width:200px;}
+		#func_help {vertical-align:top;}
 	</style>
 </head>
 
@@ -149,29 +153,11 @@
 			<td>
 				<label for="func">Associated functions <abbr title="<character>=<func name>. Fucn names are those listed in &quot;Availabe functions&quot;. Not all used characters have to have functions assigned, unnasigned characters do not do anything, though of course they can impact evolution in rules. Same character can have multiple function associated with it, they will be executed in order they are defined.">?</abbr>:</label>
 			</td>
-			<td>Available functions:</td>
+			<td id="func_help_col">Available functions:</td>
 		</tr>
 		<tr>
-			<td>
-<textarea id="rules" rows="10" cols="30">x=xw[D][A]zDc
-z=zs[D][A]eAx
-c=cd[W][S]eWz
-e=ea[W]S[S]xc
-D=Ddr
-A=Aar
-W=Wwr
-S=Ssr</textarea>
-			</td>
-			<td>
-<textarea id="func" rows="10" cols="30">r=rect
-w=mu
-a=ml
-s=md
-d=mr
-[=push
-]=pop
-@=rep</textarea>
-			</td>
+			<td><textarea id="rules" rows="10" cols="30"></textarea></td>
+			<td><textarea id="func" rows="10" cols="30"></textarea></td>
 			<td><div id="func_help"></div></td>
 		</tr>
 	</table>
@@ -195,7 +181,7 @@ d=mr
 				<div id="examples_container">
 					<select id="examples">
 						<option value="">- Examples -</option>
-						<option value="{&quot;seed&quot;:&quot;0&quot;,&quot;rules&quot;:&quot;1=11\n0=1[0]0&quot;,&quot;func&quot;:&quot;1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;45.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: basic tree</option>
+						<option selected="selected" value="{&quot;seed&quot;:&quot;0&quot;,&quot;rules&quot;:&quot;1=11\n0=1[0]0&quot;,&quot;func&quot;:&quot;1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;45.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: basic tree</option>
 						<option value="{&quot;seed&quot;:&quot;F&quot;,&quot;rules&quot;:&quot;F=F+F-F-F+F&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;3.0&quot;,&quot;len&quot;:&quot;5.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Koch curve</option>
 						<option value="{&quot;seed&quot;:&quot;A&quot;,&quot;rules&quot;:&quot;A=B-A-B\nB=A+B+A&quot;,&quot;func&quot;:&quot;A=fwd\nB=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;60.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Sierpinski triangle</option>
 						<option value="{&quot;seed&quot;:&quot;FX&quot;,&quot;rules&quot;:&quot;X=X+YF\nY=FX-Y&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;12.0&quot;,&quot;len&quot;:&quot;4.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Dragon curve</option>

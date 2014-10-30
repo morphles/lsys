@@ -13,12 +13,7 @@ var dummy_ctx = {
 		this.maxx = this.maxx < x ? x : this.maxx;
 		this.maxy = this.maxy < y ? y : this.maxy;
 	},
-	lineTo:function (x, y) {
-		this.minx = this.minx > x ? x : this.minx;
-		this.miny = this.miny > y ? y : this.miny;
-		this.maxx = this.maxx < x ? x : this.maxx;
-		this.maxy = this.maxy < y ? y : this.maxy;
-	},
+	lineTo:function(x, y) { this.moveTo(x, y); },
 	fillRect:function (x, y, w, h) {
 		this.minx = this.minx > x ? x : this.minx;
 		this.miny = this.miny > y ? y : this.miny;
