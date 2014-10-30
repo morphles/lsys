@@ -109,11 +109,10 @@ var func_help = {
 	rep:'Repeat last command, only considers commands that affect position/angle: fwd, tl, tr, mu, md, mr, ml',
 };
 
-function ran(a) {//maybe can be simplified; maybe using non cumulative probabilitis; though probably simpler with cumulative
-	var i, j;
-	var r = Math.random();
-	for (i = 0, j = 0; (r > j) && (i < a.length); j = a[i], i++);
-	return Math.max(i - 1, 0);
+function ran(a) {
+	var i, r = Math.random();
+	for (i = 0; (r > 0) && (i < a.length); r -= a[i], i++);
+	return i - 1;
 }
 
 function spinner (ev) {
@@ -139,7 +138,7 @@ function evolve_string(s, rules, iterations) {
 function parse_rules(rstring) {
 	var lhs, rhs, chr, prob, rs = {}, arr, tmp;
 
-	rstring.split("\n").forEach(function (e) {//XXX mozilla specific multiple asignments follow XXX
+	rstring.split("\n").forEach(function (e) {
 		tmp = e.split("=");
 		lhs = tmp[0]; rhs = tmp[1];
 		tmp = lhs.split(".");
@@ -150,12 +149,6 @@ function parse_rules(rstring) {
 		rs[chr]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
 		rs[chr]['rs'].push(rhs);
 	});
-
-	for (chr in rs) {
-		arr = rs[chr]['ps'].slice(0);
-		//changes probabilities to cumulative, XXX might be a good place for above mentioned validation; Might not be needed if ran() could be reworked to work with non cumulative probabilities XXX
-		rs[chr]['ps'] = arr.reduce(function (p, c, i) { p.push((i ? p[i - 1] : 0) + c); return p;}, []);
-	}
 
 	return rs;
 }
