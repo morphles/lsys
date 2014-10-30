@@ -41,7 +41,7 @@
 			for (i = 0; i < s.length; i++) {
 				func_list = assocc[s[i]];
 				for (k in func_list) {
-					state = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](ctx, state) : state;
+					state = funcs[func_list[k]](ctx, state);
 				}
 			}
 			ctx.stroke();
@@ -87,7 +87,7 @@
 
 			e('timing').innerHTML = 'Evolving time: ' + (track_res[1] / 1000) + 's, string lenght: ' + e('result').innerHTML.length + ' <br>';
 
-			track_res = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
+			track_res = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value, funcs));});
 
 			e('timing').innerHTML = e('timing').innerHTML + 'Drawing time: ' + (track_res[1] / 1000) + 's';
 			e('dl_container').innerHTML = '<a href="' + buffer.c.toDataURL("image/png") + '">Download</a>';

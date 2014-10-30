@@ -152,14 +152,16 @@ function parse_rules(rstring) {
 	return rs;
 }
 
-function parse_funcs(fstring) {
+function parse_funcs(fstring, funcs) {
 	var parts, assocc = {};
 	fstring.split("\n").forEach(function (e) {
 		parts = e.split("=");
-		if (typeof assocc[parts[0]] == 'undefined') {
-			assocc[parts[0]] = [];
+		if (typeof funcs[parts[1]] === 'function') {
+			if (typeof assocc[parts[0]] == 'undefined') {
+				assocc[parts[0]] = [];
+			}
+			assocc[parts[0]].push(parts[1]);
 		}
-		assocc[parts[0]].push(parts[1]);
 	});
 	return assocc;
 }
