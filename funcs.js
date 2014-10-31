@@ -7,18 +7,22 @@ var dummy_ctx = {
 	reset:function() {
 		this.minx = this.miny = this.maxx = this.maxy = 0;
 	},
-	moveTo:function (x, y) {
+	setmins:function (x, y) {
 		this.minx = this.minx > x ? x : this.minx;
 		this.miny = this.miny > y ? y : this.miny;
+	},
+	setmaxs:function (x, y) {
 		this.maxx = this.maxx < x ? x : this.maxx;
 		this.maxy = this.maxy < y ? y : this.maxy;
 	},
+	moveTo:function (x, y) {
+		this.setmins(x, y);
+		this.setmaxs(x, y);
+	},
 	lineTo:function(x, y) { this.moveTo(x, y); },
 	fillRect:function (x, y, w, h) {
-		this.minx = this.minx > x ? x : this.minx;
-		this.miny = this.miny > y ? y : this.miny;
-		this.maxx = this.maxx < (x + w) ? (x + w) : this.maxx;
-		this.maxy = this.maxy < (y + h) ? (y + h) : this.maxy;
+		this.setmins(x, y);
+		this.setmaxs(x + w, y + h);
 	},
 	beginPath:function() {},
 	stroke:function() {},
