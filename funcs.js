@@ -170,6 +170,22 @@ function parse_funcs(fstring, funcs) {
 	return assocc;
 }
 
+function load_examples(select_default) {
+	var option;
+	var select = e('examples');
+	examples.forEach(function (e) {
+		option = document.createElement("option"); 
+		option.text = e.name;
+		option.value = JSON.stringify(e.value);
+		select.appendChild(option);
+	});
+
+	if (select_default) {
+		select.selectedIndex = 1;
+		select.onchange();
+	}
+}
+
 function get_json() {
 	alert(JSON.stringify({
 		'seed':e('seed').value, 'rules':e('rules').value, 'func':e('func').value,
@@ -179,7 +195,7 @@ function get_json() {
 
 function set_json(d) {
 	if (!d) return;
-	d = JSON.parse(d);
+	if (typeof d === 'string') d = JSON.parse(d);
 	for (k in fields = ['seed', 'rules', 'func', 'iter', 'len', 'deg', 'alpha']) {
 		e(fields[k]).value = d[fields[k]];
 	}
