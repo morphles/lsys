@@ -105,11 +105,11 @@ var func_help = {
 	push:'Push all parameters into stack',
 	pop:'Pop all parameters from the stack',
 	point:'Draw a single point at current position',
-	rect:'Draw square at current position with side of &quot;lenght&quot;',
-	mu:'Move upwards by lenght, without drawing',
-	md:'Move downwards by lenght, without drawing',
-	mr:'Move right by lenght, without drawing',
-	ml:'Move left by lenght, without drawing',
+	rect:'Draw square at current position with side of &quot;length&quot;',
+	mu:'Move upwards by length, without drawing',
+	md:'Move downwards by length, without drawing',
+	mr:'Move right by length, without drawing',
+	ml:'Move left by length, without drawing',
 	rep:'Repeat last command, only considers commands that affect position/angle: fwd, tl, tr, mu, md, mr, ml',
 };
 
@@ -126,11 +126,20 @@ function spinner (ev) {
 }
 
 function evolve_string(s, rules, iterations) {
-	var ns, p, i, j, idx;
+	var ns, p, i, j, idx, max_len, matcher;
 	for (i = 0; i < iterations; i++) {
 		ns = '';
 		for (j = 0; j < s.length; j++) {
-			p = rules[s[j]];
+			max_len = 0;
+			p = null;
+			for (matcher in rules[s[j]]) {
+				if (matcher.length > max_len) {
+					if (s.indexOf(matcher, j - rules[s[j]][matcher].o) == j - rules[s[j]][matcher].o) {
+						max_len = matcher.length;
+						p = rules[s[j]][matcher];
+					}
+				}
+			}
 			ns = ns + (p ? p['rs'][ran(p['ps'])] : s[j]);
 		}
 		s = ns;
@@ -138,19 +147,39 @@ function evolve_string(s, rules, iterations) {
 	return s;
 }
 
+//XXX add error handling when rules can not be parsed
 function parse_rules(rstring) {
-	var lhs, rhs, chr, prob, rs = {}, arr, tmp;
+	var lhs, rhs, chr, prob, rs = {}, arr, tmp, prefix, suffix, matcher;
 
 	rstring.split("\n").forEach(function (e) {
 		tmp = e.split("=");
 		lhs = tmp[0]; rhs = tmp[1];
 		tmp = lhs.split(".");
-		chr = tmp[0]; prob = tmp[1];
-		if (typeof rs[chr] == 'undefined') {
-			rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
+		lhs = tmp[0]; prob = tmp[1];
+		tmp = lhs.split(",");
+		prefix = '';
+		suffix = '';
+		if (tmp.length == 1) {
+			chr = tmp[0];
 		}
-		rs[chr]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
-		rs[chr]['rs'].push(rhs);
+		else if (tmp.length == 3) {
+			prefix = tmp[0];
+			chr = tmp[1];
+			suffix = tmp[2];
+		}
+		if (!chr) {
+			return;//XXX handle this properly
+		}
+
+		matcher = prefix + chr + suffix;
+		if (typeof rs[chr] == 'undefined') {
+			rs[chr] = {};
+		}
+		if (typeof rs[chr][matcher] == 'undefined') {
+			rs[chr][matcher] = {'ps':[], 'rs':[], 'o':prefix.length};//probabilities, replacements, offsets for matcher - how many chars before current character matcher starts
+		}
+		rs[chr][matcher]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
+		rs[chr][matcher]['rs'].push(rhs);
 	});
 
 	return rs;
