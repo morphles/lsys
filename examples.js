@@ -107,4 +107,64 @@ var examples = [
 			alpha:"0.2"
 		}
 	},
+	{
+		name:'"Mirorpinsky"',
+		value:{
+			seed:"0",
+			rules:"1=11\n0=1[l0][0][r0]0",
+			func:"1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr\nl=tl\nr=tr",
+			iter:"8.0",
+			len:"8.0",
+			deg:"60.0",
+			alpha:"1"
+		}
+	},
+	{
+		name:'Penrose!',
+		value:{
+			seed:"[N]++[N]++[N]++[N]++[N]",
+			rules:"M=OA++PA----NA[-OA----MA]++\nN=+OA--PA[---MA--NA]+\nO=-MA++NA[+++OA++PA]-\nP=--OA++++MA[+PA++++NA]--NA\nA=",
+			func:"A=fwd\n[=push\n-=tl\n]=pop\n+=tr",
+			iter:"5.0",
+			len:"16.0",
+			deg:"36.0",
+			alpha:"1"
+		}
+	},
+	{
+		name:'Crystal',
+		value:{
+			seed:"F+F+F+F",
+			rules:"F=FF+F++F+F",
+			func:"F=fwd\n+=tl",
+			iter:"5.0",
+			len:"2.0",
+			deg:"90.0",
+			alpha:"1"
+		}
+	},
+	{
+		name:'Random Crystal',
+		value:{
+			seed:"F+F+F+F",
+			rules:"F.2=F+F++F+FFF\nF.2=FFF+F++F+F\nF.2=FF+F++F+FF\nF.2=FFF+FF++FF+F\nF.2=F+FF++FF+FFF",
+			func:"F=fwd\n+=tr",
+			iter:"4.0",
+			len:"2.0",
+			deg:"90.0",
+			alpha:"1"
+		}
+	},
+	{
+		name:'Hex Crystal',
+		value:{
+			seed:"F+F+F+F+F+F",
+			rules:"F=FF++FF+++FF+F+F+++F++F",
+			func:"F=fwd\n+=tl",
+			iter:"4.0",
+			len:"2.0",
+			deg:"60.0",
+			alpha:"1"
+		}
+	}
 ];
