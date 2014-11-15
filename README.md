@@ -12,7 +12,7 @@ Features:
   * Number of iterations entry
   * Rules entry
   * Supports probabilistic rules
-  * Context sensitive/multichar rules *(only tests immediate neughborhood, theres a space for improvement, as per [this paper](http://algorithmicbotany.org/papers/abop/abop-ch1.pdf)*
+  * Context sensitive/multichar rules *(only tests immediate neughborhood, theres a space for improvement, as per [this paper](http://algorithmicbotany.org/papers/abop/abop-ch1.pdf))*
   * Display generated string
   * Customizable interpreteation of string characters, "turtle graphics" and more, multiple functions per character
   * Drawing by customized interpretation
