@@ -4,7 +4,7 @@ var examples = [
 		value:{
 			seed:"0",
 			rules:"1=11\n0=1[0]0",
-			func:"1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr",
+			func:"1=line\n0=line\n[=push\n[=tl\n]=pop\n]=tr",
 			iter:"7.0",
 			len:"2.0",
 			deg:"45.0",
@@ -16,7 +16,7 @@ var examples = [
 		value:{
 			seed:"F",
 			rules:"F=F+F-F-F+F",
-			func:"F=fwd\n+=tl\n-=tr",
+			func:"F=line\n+=tl\n-=tr",
 			iter:"3.0",
 			len:"5.0",
 			deg:"90.0",
@@ -28,7 +28,7 @@ var examples = [
 		value:{
 			seed:"A",
 			rules:"A=B-A-B\nB=A+B+A",
-			func:"A=fwd\nB=fwd\n+=tl\n-=tr",
+			func:"A=line\nB=line\n+=tl\n-=tr",
 			iter:"7.0",
 			len:"2.0",
 			deg:"60.0",
@@ -40,7 +40,7 @@ var examples = [
 		value:{
 			seed:"FX",
 			rules:"X=X+YF\nY=FX-Y",
-			func:"F=fwd\n+=tl\n-=tr",
+			func:"F=line\n+=tl\n-=tr",
 			iter:"12.0",
 			len:"4.0",
 			deg:"90.0",
@@ -52,7 +52,7 @@ var examples = [
 		value:{
 			seed:"X",
 			rules:"F=FF\nX=F-[[X]+X]+F[+FX]-X",
-			func:"F=fwd\n+=tl\n-=tr\n[=push\n]=pop",
+			func:"F=line\n+=tl\n-=tr\n[=push\n]=pop",
 			iter:"5.0",
 			len:"4.0",
 			deg:"25.0",
@@ -112,7 +112,7 @@ var examples = [
 		value:{
 			seed:"0",
 			rules:"1=11\n0=1[l0][0][r0]0",
-			func:"1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr\nl=tl\nr=tr",
+			func:"1=line\n0=line\n[=push\n[=tl\n]=pop\n]=tr\nl=tl\nr=tr",
 			iter:"8.0",
 			len:"8.0",
 			deg:"60.0",
@@ -124,7 +124,7 @@ var examples = [
 		value:{
 			seed:"[N]++[N]++[N]++[N]++[N]",
 			rules:"M=OA++PA----NA[-OA----MA]++\nN=+OA--PA[---MA--NA]+\nO=-MA++NA[+++OA++PA]-\nP=--OA++++MA[+PA++++NA]--NA\nA=",
-			func:"A=fwd\n[=push\n-=tl\n]=pop\n+=tr",
+			func:"A=line\n[=push\n-=tl\n]=pop\n+=tr",
 			iter:"5.0",
 			len:"16.0",
 			deg:"36.0",
@@ -136,7 +136,7 @@ var examples = [
 		value:{
 			seed:"F+F+F+F",
 			rules:"F=FF+F++F+F",
-			func:"F=fwd\n+=tl",
+			func:"F=line\n+=tl",
 			iter:"5.0",
 			len:"2.0",
 			deg:"90.0",
@@ -148,7 +148,7 @@ var examples = [
 		value:{
 			seed:"F+F+F+F",
 			rules:"F.2=F+F++F+FFF\nF.2=FFF+F++F+F\nF.2=FF+F++F+FF\nF.2=FFF+FF++FF+F\nF.2=F+FF++FF+FFF",
-			func:"F=fwd\n+=tr",
+			func:"F=line\n+=tr",
 			iter:"4.0",
 			len:"2.0",
 			deg:"90.0",
@@ -160,10 +160,22 @@ var examples = [
 		value:{
 			seed:"F+F+F+F+F+F",
 			rules:"F=FF++FF+++FF+F+F+++F++F",
-			func:"F=fwd\n+=tl",
+			func:"F=line\n+=tl",
 			iter:"4.0",
 			len:"2.0",
 			deg:"60.0",
+			alpha:"1"
+		}
+	},
+	{
+		name:'Islands',
+		value:{
+			seed:"F+F+F+F",
+			rules:"F=F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF\nf=ffffff",
+			func:"F=line\nf=fwd\n-=tl\n+=tr",
+			iter:"2.0",
+			len:"5.0",
+			deg:"90.0",
 			alpha:"1"
 		}
 	}

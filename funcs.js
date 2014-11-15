@@ -37,14 +37,20 @@ function createOffscreenCanvas(w, h){
 
 var funcs = {
 	stack:[],
-	fwd:function (ctx, s) {
-		funcs.rep = funcs.fwd;
+	line:function (ctx, s) {
+		funcs.rep = funcs.line;
 		var nx = s.x + Math.cos(s.a) * s.l;
 		var ny = s.y + Math.sin(s.a) * s.l;
 		ctx.moveTo(s.x + 0.5, s.y + 0.5);//+0.5 cause web is mega retarded again!
 		ctx.lineTo(nx + 0.5, ny + 0.5);
 		s.x = nx;
 		s.y = ny;
+		return s;
+	},
+	fwd:function (ctx, s) {
+		funcs.rep = funcs.line;
+		s.x = s.x + Math.cos(s.a) * s.l;
+		s.y = s.y + Math.sin(s.a) * s.l;
 		return s;
 	},
 	tl:function (ctx, s) {
@@ -99,7 +105,8 @@ var funcs = {
 };
 
 var func_help = {
-	fwd:'Move forward by &quot;Length&quot; drawing a line',
+	line:'Move forward by &quot;Length&quot; drawing a line',
+	fwd:'Move forward by &quot;Length&quot; without drawing a line',
 	tl:'Turn left by &quot;Angle&quot;',
 	tr:'Turn right by &quot;Angle&quot;',
 	push:'Push all parameters into stack',
