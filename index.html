@@ -1,6 +1,7 @@
 <html>
 <head>
 	<title>L-Systems Explorer</title>
+	<script type="text/javascript" src="examples.js"></script>
 	<script type="text/javascript" src="funcs.js"></script>
 	<script type="text/javascript">
 		var w, h;
@@ -41,7 +42,7 @@
 			for (i = 0; i < s.length; i++) {
 				func_list = assocc[s[i]];
 				for (k in func_list) {
-					state = typeof funcs[func_list[k]] === 'function' ? funcs[func_list[k]](ctx, state) : state;
+					state = funcs[func_list[k]](ctx, state);
 				}
 			}
 			ctx.stroke();
@@ -87,7 +88,7 @@
 
 			e('timing').innerHTML = 'Evolving time: ' + (track_res[1] / 1000) + 's, string lenght: ' + e('result').innerHTML.length + ' <br>';
 
-			track_res = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value));});
+			track_res = track_time(function() {return draw(e('result').innerHTML, parse_funcs(e('func').value, funcs));});
 
 			e('timing').innerHTML = e('timing').innerHTML + 'Drawing time: ' + (track_res[1] / 1000) + 's';
 			e('dl_container').innerHTML = '<a href="' + buffer.c.toDataURL("image/png") + '">Download</a>';
@@ -107,9 +108,7 @@
 			e('set_json').onclick = function () { set_json(prompt("Please enter JSON string", "")); };
 			e('iter').onwheel = e('len').onwheel = e('deg').onwheel = e('alpha').onwheel = spinner;
 			e('examples').onchange = function () { set_json(e('examples').value); };
-			if (!e('rules').value && !e('func').value) {
-				e('examples').onchange();
-			}
+			load_examples(!e('rules').value && !e('func').value);
 
 			e('cv').onmousedown = function (e) { mouse.dragging = true; mouse.px = e.clientX; mouse.py = e.clientY; };
 			e('cv').onmouseup = e('cv').onmouseout = function () { mouse.dragging = false; };
@@ -179,18 +178,7 @@
 		<tr>
 			<td>
 				<div id="examples_container">
-					<select id="examples">
-						<option value="">- Examples -</option>
-						<option selected="selected" value="{&quot;seed&quot;:&quot;0&quot;,&quot;rules&quot;:&quot;1=11\n0=1[0]0&quot;,&quot;func&quot;:&quot;1=fwd\n0=fwd\n[=push\n[=tl\n]=pop\n]=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;45.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: basic tree</option>
-						<option value="{&quot;seed&quot;:&quot;F&quot;,&quot;rules&quot;:&quot;F=F+F-F-F+F&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;3.0&quot;,&quot;len&quot;:&quot;5.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Koch curve</option>
-						<option value="{&quot;seed&quot;:&quot;A&quot;,&quot;rules&quot;:&quot;A=B-A-B\nB=A+B+A&quot;,&quot;func&quot;:&quot;A=fwd\nB=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;7.0&quot;,&quot;len&quot;:&quot;2.0&quot;,&quot;deg&quot;:&quot;60.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Sierpinski triangle</option>
-						<option value="{&quot;seed&quot;:&quot;FX&quot;,&quot;rules&quot;:&quot;X=X+YF\nY=FX-Y&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr&quot;,&quot;iter&quot;:&quot;12.0&quot;,&quot;len&quot;:&quot;4.0&quot;,&quot;deg&quot;:&quot;90.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Dragon curve</option>
-						<option value="{&quot;seed&quot;:&quot;X&quot;,&quot;rules&quot;:&quot;F=FF\nX=F-[[X]+X]+F[+FX]-X&quot;,&quot;func&quot;:&quot;F=fwd\n+=tl\n-=tr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;5.0&quot;,&quot;len&quot;:&quot;4.0&quot;,&quot;deg&quot;:&quot;25.0&quot;,&quot;alpha&quot;:&quot;1&quot;}">Wikipedia: Fractal plant</option>
-						<option value="{&quot;seed&quot;:&quot;[x][z]v&quot;,&quot;rules&quot;:&quot;x=rAx\nv=rDv\nz=rWz\nA=a[z]A\nD=d[z]D\nW=wW&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop&quot;,&quot;iter&quot;:&quot;15&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.4&quot;}">&quot;City&quot;</option>
-						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x.6=xrw[D][A]zDc\nx.4=x\nz.6=zrs[D][A]eAx\nz.4=z\nc.6=crd[W][S]eWz\nc.4=c\ne.6=era[W]S[S]xc\ne.4=e\nD=Dd\nA=Aa\nW=Ww\nS=Ss&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;12&quot;,&quot;len&quot;:&quot;2&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents</option>
-						<option value="{&quot;seed&quot;:&quot;[x][z][c]e&quot;,&quot;rules&quot;:&quot;x=xw[D][A]zDc\nz=zs[D][A]eAx\nc=cd[W][S]eWz\ne=ea[W]S[S]xc\nD=Ddr\nA=Aar\nW=Wwr\nS=Ssr&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;6.0&quot;,&quot;len&quot;:&quot;8&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents Base</option>
-						<option value="{&quot;seed&quot;:&quot;f&quot;,&quot;rules&quot;:&quot;f.6=f[i]f\nf.1=Af\nf.1=Sf\nf.1=Wf\nf.1=Df\ni=[q][e][z]c\nq.2=a[e]r[z]q\nq.8=qa\ne.2=w[q]r[c]e\ne.8=ew\nz.2=s[q]r[c]z\nz.8=zs\nc.2=d[e]r[z]c\nc.8=cd\nD.4=Dd\nD.6=D\nA.4=Aa\nA.6=A\nW.4=Ww\nW.6=W\nS.4=Ss\nS.6=S&quot;,&quot;func&quot;:&quot;r=rect\nw=mu\na=ml\ns=md\nd=mr\n[=push\n]=pop\n@=rep&quot;,&quot;iter&quot;:&quot;20&quot;,&quot;len&quot;:&quot;3&quot;,&quot;deg&quot;:&quot;90&quot;,&quot;alpha&quot;:&quot;0.2&quot;}">Continents 2</option>
-					</select>
+					<select id="examples"><option value="">- Examples -</option></select>
 					<input type="button" id="get_json" value="Get JSON" />
 					<input type="button" id="set_json" value="Set JSON" />
 				</div>

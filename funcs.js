@@ -7,18 +7,22 @@ var dummy_ctx = {
 	reset:function() {
 		this.minx = this.miny = this.maxx = this.maxy = 0;
 	},
-	moveTo:function (x, y) {
+	setmins:function (x, y) {
 		this.minx = this.minx > x ? x : this.minx;
 		this.miny = this.miny > y ? y : this.miny;
+	},
+	setmaxs:function (x, y) {
 		this.maxx = this.maxx < x ? x : this.maxx;
 		this.maxy = this.maxy < y ? y : this.maxy;
 	},
+	moveTo:function (x, y) {
+		this.setmins(x, y);
+		this.setmaxs(x, y);
+	},
 	lineTo:function(x, y) { this.moveTo(x, y); },
 	fillRect:function (x, y, w, h) {
-		this.minx = this.minx > x ? x : this.minx;
-		this.miny = this.miny > y ? y : this.miny;
-		this.maxx = this.maxx < (x + w) ? (x + w) : this.maxx;
-		this.maxy = this.maxy < (y + h) ? (y + h) : this.maxy;
+		this.setmins(x, y);
+		this.setmaxs(x + w, y + h);
 	},
 	beginPath:function() {},
 	stroke:function() {},
@@ -33,14 +37,20 @@ function createOffscreenCanvas(w, h){
 
 var funcs = {
 	stack:[],
-	fwd:function (ctx, s) {
-		funcs.rep = funcs.fwd;
+	line:function (ctx, s) {
+		funcs.rep = funcs.line;
 		var nx = s.x + Math.cos(s.a) * s.l;
 		var ny = s.y + Math.sin(s.a) * s.l;
 		ctx.moveTo(s.x + 0.5, s.y + 0.5);//+0.5 cause web is mega retarded again!
 		ctx.lineTo(nx + 0.5, ny + 0.5);
 		s.x = nx;
 		s.y = ny;
+		return s;
+	},
+	fwd:function (ctx, s) {
+		funcs.rep = funcs.line;
+		s.x = s.x + Math.cos(s.a) * s.l;
+		s.y = s.y + Math.sin(s.a) * s.l;
 		return s;
 	},
 	tl:function (ctx, s) {
@@ -95,25 +105,25 @@ var funcs = {
 };
 
 var func_help = {
-	fwd:'Move forward by &quot;Length&quot; drawing a line',
+	line:'Move forward by &quot;Length&quot; drawing a line',
+	fwd:'Move forward by &quot;Length&quot; without drawing a line',
 	tl:'Turn left by &quot;Angle&quot;',
 	tr:'Turn right by &quot;Angle&quot;',
 	push:'Push all parameters into stack',
 	pop:'Pop all parameters from the stack',
 	point:'Draw a single point at current position',
-	rect:'Draw square at current position with side of &quot;lenght&quot;',
-	mu:'Move upwards by lenght, without drawing',
-	md:'Move downwards by lenght, without drawing',
-	mr:'Move right by lenght, without drawing',
-	ml:'Move left by lenght, without drawing',
+	rect:'Draw square at current position with side of &quot;length&quot;',
+	mu:'Move upwards by length, without drawing',
+	md:'Move downwards by length, without drawing',
+	mr:'Move right by length, without drawing',
+	ml:'Move left by length, without drawing',
 	rep:'Repeat last command, only considers commands that affect position/angle: fwd, tl, tr, mu, md, mr, ml',
 };
 
-function ran(a) {//maybe can be simplified; maybe using non cumulative probabilitis; though probably simpler with cumulative
-	var i, j;
-	var r = Math.random();
-	for (i = 0, j = 0; (r > j) && (i < a.length); j = a[i], i++);
-	return Math.max(i - 1, 0);
+function ran(a) {
+	var i, r = Math.random();
+	for (i = 0; (r > 0) && (i < a.length); r -= a[i++]);
+	return i - 1;
 }
 
 function spinner (ev) {
@@ -123,53 +133,93 @@ function spinner (ev) {
 }
 
 function evolve_string(s, rules, iterations) {
-	var ns, p, i, j, idx;
+	var ns, p, i, j, idx, max_len, matcher;
 	for (i = 0; i < iterations; i++) {
 		ns = '';
 		for (j = 0; j < s.length; j++) {
-			p = rules[s[j]];
-			idx = p ? ran(p['ps']) : 0;
-			ns = ns + (p ? p['rs'][idx] : s[j]);
+			max_len = 0;
+			p = null;
+			for (matcher in rules[s[j]]) {
+				if (matcher.length > max_len) {
+					if (s.indexOf(matcher, j - rules[s[j]][matcher].o) == j - rules[s[j]][matcher].o) {
+						max_len = matcher.length;
+						p = rules[s[j]][matcher];
+					}
+				}
+			}
+			ns = ns + (p ? p['rs'][ran(p['ps'])] : s[j]);
 		}
 		s = ns;
 	}
 	return s;
 }
 
+//XXX add error handling when rules can not be parsed
 function parse_rules(rstring) {
-	var lhs, rhs, chr, prob, rs = {}, arr, tmp;
+	var lhs, rhs, chr, prob, rs = {}, arr, tmp, prefix, suffix, matcher;
 
-	rstring.split("\n").forEach(function (e) {//XXX mozilla specific multiple asignments follow XXX
+	rstring.split("\n").forEach(function (e) {
 		tmp = e.split("=");
 		lhs = tmp[0]; rhs = tmp[1];
 		tmp = lhs.split(".");
-		chr = tmp[0]; prob = tmp[1];
-		if (typeof rs[chr] == 'undefined') {
-			rs[chr] = {'ps':[], 'rs':[]};//probabilities, replacements
+		lhs = tmp[0]; prob = tmp[1];
+		tmp = lhs.split(",");
+		prefix = '';
+		suffix = '';
+		if (tmp.length == 1) {
+			chr = tmp[0];
 		}
-		rs[chr]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
-		rs[chr]['rs'].push(rhs);
-	});
+		else if (tmp.length == 3) {
+			prefix = tmp[0];
+			chr = tmp[1];
+			suffix = tmp[2];
+		}
+		if (!chr) {
+			return;//XXX handle this properly
+		}
 
-	for (chr in rs) {
-		arr = rs[chr]['ps'].slice(0);
-		//changes probabilities to cumulative, XXX might be a good place for above mentioned validation; Might not be needed if ran() could be reworked to work with non cumulative probabilities XXX
-		rs[chr]['ps'] = arr.reduce(function (p, c, i) { p.push((i ? p[i - 1] : 0) + c); return p;}, []);
-	}
+		matcher = prefix + chr + suffix;
+		if (typeof rs[chr] == 'undefined') {
+			rs[chr] = {};
+		}
+		if (typeof rs[chr][matcher] == 'undefined') {
+			rs[chr][matcher] = {'ps':[], 'rs':[], 'o':prefix.length};//probabilities, replacements, offsets for matcher - how many chars before current character matcher starts
+		}
+		rs[chr][matcher]['ps'].push(prob ? +("0." + prob) : 1);//XXX add validation of probability definitions and sum, add implicit filling with identity if probabilities do not add up to 1 XXX
+		rs[chr][matcher]['rs'].push(rhs);
+	});
 
 	return rs;
 }
 
-function parse_funcs(fstring) {
+function parse_funcs(fstring, funcs) {
 	var parts, assocc = {};
 	fstring.split("\n").forEach(function (e) {
 		parts = e.split("=");
-		if (typeof assocc[parts[0]] == 'undefined') {
-			assocc[parts[0]] = [];
+		if (typeof funcs[parts[1]] === 'function') {
+			if (typeof assocc[parts[0]] == 'undefined') {
+				assocc[parts[0]] = [];
+			}
+			assocc[parts[0]].push(parts[1]);
 		}
-		assocc[parts[0]].push(parts[1]);
 	});
 	return assocc;
+}
+
+function load_examples(select_default) {
+	var option;
+	var select = e('examples');
+	examples.forEach(function (e) {
+		option = document.createElement("option"); 
+		option.text = e.name;
+		option.value = JSON.stringify(e.value);
+		select.appendChild(option);
+	});
+
+	if (select_default) {
+		select.selectedIndex = 1;
+		select.onchange();
+	}
 }
 
 function get_json() {
@@ -181,7 +231,7 @@ function get_json() {
 
 function set_json(d) {
 	if (!d) return;
-	d = JSON.parse(d);
+	if (typeof d === 'string') d = JSON.parse(d);
 	for (k in fields = ['seed', 'rules', 'func', 'iter', 'len', 'deg', 'alpha']) {
 		e(fields[k]).value = d[fields[k]];
 	}
